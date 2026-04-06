@@ -521,9 +521,13 @@
         <div class="page" id="page-draw">
             <div class="card">
                 <h2>📝 記錄抽獎結果</h2>
-                <p style="font-size: 0.85em; color: #888; margin-bottom: 16px;">
+                <div id="draw-day-notice" style="display:none; background:#fff3cd; border:2px solid #ffc107; border-radius:12px; padding:12px; margin-bottom:16px; text-align:center; color:#856404; font-size:0.9em;">
+                    <strong>⚠️ 今日唔係抽獎日！</strong><br>
+                    <span id="draw-day-next">下次抽獎日：</span>
+                </div>
+                <p style="font-size: 0.85em; color: #888; margin-bottom: 16px;" id="draw-info-text">
                     消費滿 50 MOP 後去官方平台抽獎，然後喺度記錄結果<br>
-                    每週每種支付工具上限 3 次<br>
+                    每週每種支付工具上限 3 次｜<strong>只限星期五、六、日</strong><br>
                     券額：10 / 20 / 50 / 100 / 200 MOP（可能唔中獎）
                 </p>
                 <div class="form-group">
@@ -706,6 +710,45 @@
                 <p style="margin-top:12px; font-size:0.85em; color:#888;">加完之後，主畫面會出現一個 🪙 圖標，一按就開！</p>
             </div>
             <button class="btn btn-primary" onclick="closeInstallModal()">知道喇！</button>
+        </div>
+    </div>
+
+    <!-- Edit Draw Modal -->
+    <div class="modal-overlay" id="edit-draw-modal">
+        <div class="modal" style="max-width:380px; text-align:left;">
+            <h3 style="text-align:center;">✏️ 修改抽獎記錄</h3>
+            <div class="form-group">
+                <label>用邊個錢包抽</label>
+                <select id="edit-draw-wallet">
+                    <option value="MPay">MPay 澳門錢包</option>
+                    <option value="支付寶">支付寶（澳門）</option>
+                    <option value="中銀">澳門中銀手機銀行</option>
+                    <option value="工銀">工銀 e 支付</option>
+                    <option value="豐付寶">豐付寶</option>
+                    <option value="廣發">廣發移動支付錢包</option>
+                    <option value="LusoPay">LusoPay（國際銀行）</option>
+                    <option value="UePay">極易付 UePay</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>抽獎結果</label>
+                <select id="edit-draw-result">
+                    <option value="0">💨 唔中獎</option>
+                    <option value="10">💰 $10 MOP</option>
+                    <option value="20">💰 $20 MOP</option>
+                    <option value="50">💰 $50 MOP</option>
+                    <option value="100">💰 $100 MOP</option>
+                    <option value="200">💰 $200 MOP</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="edit-draw-date">
+            </div>
+            <div class="modal-btns" style="margin-top:16px;">
+                <button class="modal-cancel" onclick="closeEditDrawModal()">取消</button>
+                <button class="modal-confirm" style="background:#764ba2;" onclick="saveEditDraw()">儲存</button>
+            </div>
         </div>
     </div>
 
@@ -976,6 +1019,25 @@
         }
 
         // ========== DRAW ==========
+        function isDrawDay() {
+            const day = new Date().getDay(); // 0=Sun, 5=Fri, 6=Sat
+            return (day === 5 || day === 6 || day === 0); // Fri, Sat, Sun
+        }
+
+        function getNextDrawDay() {
+            const now = new Date();
+            const day = now.getDay();
+            let daysUntil = 0;
+            if (day >= 1 && day <= 4) daysUntil = 5 - day; // Mon-Thu → Fri
+            else if (day === 5) daysUntil = 0; // Fri
+            else if (day === 6) daysUntil = 1; // Sat
+            else daysUntil = 0; // Sun
+            const next = new Date(now.getTime() + daysUntil * 24 * 60 * 60 * 1000);
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            if (daysUntil === 0) return '今日';
+            return `星期${weekdays[next.getDay()]}（${daysUntil}日後）`;
+        }
+
         function getWeekDrawsForWallet(wallet) {
             const now = new Date();
             const currentWeek = getCurrentWeek();
@@ -991,6 +1053,19 @@
             updateDrawsRemaining(wallet);
             renderDrawHistory();
             renderWeeklyHistory();
+
+            // 抽獎日檢查
+            const notice = document.getElementById('draw-day-notice');
+            if (!isDrawDay()) {
+                notice.style.display = 'block';
+                document.getElementById('draw-day-next').textContent = '下次抽獎日：' + getNextDrawDay();
+                document.getElementById('draw-btn').disabled = true;
+                document.getElementById('draw-btn').textContent = '⏸️ 今日唔係抽獎日';
+            } else {
+                notice.style.display = 'none';
+                // 重新檢查剩餘次數（可能已用完）
+                updateDrawsRemaining(wallet);
+            }
         }
 
         function updateDrawsRemaining(wallet) {
@@ -1012,6 +1087,10 @@
         });
 
         function recordDraw() {
+            if (!isDrawDay()) {
+                showToast('⚠️ 今日唔係抽獎日！只限星期五、六、日抽獎');
+                return;
+            }
             const wallet = document.getElementById('draw-wallet').value;
             const weekDraws = getWeekDrawsForWallet(wallet);
             if (weekDraws.length >= MAX_DRAWS_PER_WEEK_PER_WALLET) {
@@ -1081,6 +1160,10 @@
                             <div class="record-detail">${d.wallet}</div>
                             <div class="record-date">${d.date}</div>
                         </div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="delete-btn" style="color:#764ba2; font-size:0.9em;" onclick="openEditDrawModal(${d.id})">✏️</button>
+                            <button class="delete-btn" onclick="deleteDraw(${d.id})">✕</button>
+                        </div>
                     </div>`;
             });
             historyEl.innerHTML = html;
@@ -1146,9 +1229,12 @@
                 // 每筆明細
                 weekDraws.forEach(d => {
                     const result = d.result === 0 ? '💨 唔中' : `💰 $${d.result}`;
-                    html += `<div class="weekly-detail-row" style="font-size:0.8em; color:#aaa;">
-                        <span>${result}</span>
-                        <span>${d.date}</span>
+                    html += `<div class="weekly-detail-row" style="font-size:0.8em; color:#aaa; display:flex; justify-content:space-between; align-items:center;">
+                        <div><span>${result}</span> <span style="margin-left:8px;">${d.date}</span></div>
+                        <div style="display:flex; gap:4px;">
+                            <button style="background:none;border:none;cursor:pointer;font-size:0.9em;padding:2px 4px;" onclick="openEditDrawModal(${d.id})">✏️</button>
+                            <button style="background:none;border:none;cursor:pointer;color:#ff6b6b;font-size:1em;padding:2px 4px;" onclick="deleteDraw(${d.id})">✕</button>
+                        </div>
                     </div>`;
                 });
                 html += '</div>';
@@ -1165,6 +1251,92 @@
             const detail = document.getElementById(id);
             detail.classList.toggle('show');
             el.classList.toggle('expanded');
+        }
+
+        // ========== EDIT/DELETE DRAW ==========
+        let editingDrawId = null;
+
+        function openEditDrawModal(id) {
+            const draw = data.draws.find(d => d.id === id);
+            if (!draw) return;
+            editingDrawId = id;
+            document.getElementById('edit-draw-wallet').value = draw.wallet;
+            document.getElementById('edit-draw-result').value = draw.result;
+            document.getElementById('edit-draw-date').value = draw.date;
+            document.getElementById('edit-draw-modal').classList.add('show');
+        }
+
+        function closeEditDrawModal() {
+            document.getElementById('edit-draw-modal').classList.remove('show');
+            editingDrawId = null;
+        }
+
+        function saveEditDraw() {
+            if (!editingDrawId) return;
+            const draw = data.draws.find(d => d.id === editingDrawId);
+            if (!draw) return;
+
+            const newWallet = document.getElementById('edit-draw-wallet').value;
+            const newResult = parseInt(document.getElementById('edit-draw-result').value);
+            const newDate = document.getElementById('edit-draw-date').value;
+
+            if (!newDate) {
+                showToast('請選擇日期！');
+                return;
+            }
+
+            // 如果修改前有中獎券，需要移除對應 voucher
+            if (draw.result > 0) {
+                // 搵到同一時間建立嘅 voucher 並移除
+                data.vouchers = data.vouchers.filter(v =>
+                    !(v.wallet === draw.wallet && v.drawDate === draw.date && v.amount === draw.result &&
+                      Math.abs(v.id - draw.id) <= 2)
+                );
+            }
+
+            // 更新 draw 記錄
+            draw.wallet = newWallet;
+            draw.result = newResult;
+            draw.date = newDate;
+
+            // 如果修改後有中獎，加回 voucher
+            if (newResult > 0) {
+                // 計算到期日（該週四）
+                const drawDt = new Date(newDate + 'T00:00:00+08:00');
+                const weekNum = getWeekNumber(drawDt);
+                const { start, end } = getWeekDates(weekNum);
+                const expiryDate = new Date(end.getTime() + 4 * 24 * 60 * 60 * 1000);
+                data.vouchers.push({
+                    id: Date.now(),
+                    amount: newResult,
+                    wallet: newWallet,
+                    drawDate: newDate,
+                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    used: false,
+                    expired: false
+                });
+            }
+
+            saveData();
+            closeEditDrawModal();
+            renderDrawPage();
+            showToast('✅ 已修改抽獎記錄');
+        }
+
+        function deleteDraw(id) {
+            const draw = data.draws.find(d => d.id === id);
+            if (!draw) return;
+            // 移除對應 voucher
+            if (draw.result > 0) {
+                data.vouchers = data.vouchers.filter(v =>
+                    !(v.wallet === draw.wallet && v.drawDate === draw.date && v.amount === draw.result &&
+                      Math.abs(v.id - draw.id) <= 2)
+                );
+            }
+            data.draws = data.draws.filter(d => d.id !== id);
+            saveData();
+            renderDrawPage();
+            showToast('已刪除抽獎記錄');
         }
 
         // ========== VOUCHERS ==========

@@ -1343,7 +1343,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    const reg = await navigator.serviceWorker.register('./sw.js');
+                    const swUrl = new URL('./sw.js', location.href).href;
+                    const reg = await navigator.serviceWorker.register(swUrl, { scope: new URL('./', location.href).href });
                     console.log('SW registered:', reg.scope);
 
                     // 監聽 SW 更新

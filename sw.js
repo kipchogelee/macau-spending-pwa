@@ -1,19 +1,23 @@
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const CACHE_NAME = `macau-spending-rewards-${CACHE_VERSION}`;
 
-// 所有需要預緩存的資源（確保路徑精確）
+// 自動偵測 SW 所在嘅基礎路徑（支援 localhost 同 GitHub Pages 子路徑）
+const SW_URL = new URL('.', self.location.href);
+const BASE_PATH = SW_URL.pathname.endsWith('/') ? SW_URL.pathname : SW_URL.pathname + '/';
+
+// 所有需要預緩存的資源
 const PRECACHE_ASSETS = [
-  './index.html',
-  './manifest.json',
-  './icon-192x192.png',
-  './icon-512x512.png',
-  './favicon-32.png',
-  './icon.svg'
-];
+  'index.html',
+  'manifest.json',
+  'icon-192x192.png',
+  'icon-512x512.png',
+  'favicon-32.png',
+  'icon.svg'
+].map(f => new URL(f, SW_URL).href);
 
 // ========== Install ==========
 self.addEventListener('install', (event) => {
-  console.log(`[SW ${CACHE_VERSION}] Installing...`);
+  console.log(`[SW ${CACHE_VERSION}] Installing... base=${BASE_PATH}`);
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
@@ -38,7 +42,7 @@ self.addEventListener('install', (event) => {
       const successCount = results.filter(r => r.status === 'fulfilled').length;
       console.log(`[SW ${CACHE_VERSION}] Precached ${successCount}/${PRECACHE_ASSETS.length} assets`);
 
-      // 強制立即接管，唔等舊 SW 自然退休
+      // 強制立即接管
       await self.skipWaiting();
     })()
   );
@@ -75,18 +79,12 @@ self.addEventListener('activate', (event) => {
 
 // ========== Fetch ==========
 self.addEventListener('fetch', (event) => {
-  // 只處理 GET 請求
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-
-  // 忽略非 http/https
   if (!url.protocol.startsWith('http')) return;
 
-  // 忽略 chrome-extension 等
-  if (!url.protocol.startsWith('http')) return;
-
-  // 導航請求（HTML 頁面）— cache-first + 網絡更新
+  // 導航請求（HTML 頁面）
   if (event.request.mode === 'navigate') {
     event.respondWith(handleNavigate(event.request));
     return;
@@ -98,32 +96,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 外部資源 — network-first with cache fallback
+  // 外部資源 — network-first
   event.respondWith(handleExternal(event.request));
 });
 
 // 導航請求處理
 async function handleNavigate(request) {
+  const indexUrl = new URL('index.html', SW_URL).href;
   try {
-    // 先嘗試緩存
-    const cached = await caches.match('./index.html') || await caches.match(request);
+    const cached = await caches.match(indexUrl) || await caches.match(request);
     if (cached) {
-      // 背景更新緩存
-      updateCache(request).catch(() => {});
+      updateCache(request, indexUrl).catch(() => {});
       return cached;
     }
-    // 緩存冇有，嘗試網絡
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put('./index.html', response.clone());
+      cache.put(indexUrl, response.clone());
     }
     return response;
   } catch (err) {
-    // 完全離線，返回緩存的 index.html
-    const cached = await caches.match('./index.html');
+    const cached = await caches.match(indexUrl);
     if (cached) return cached;
-    // 最後 fallback
     return new Response(offlineFallback(), {
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
@@ -132,7 +126,6 @@ async function handleNavigate(request) {
 
 // 同源靜態資源處理
 async function handleSameOrigin(request) {
-  // 規範化 URL（移除 query string 以提升緩存命中率）
   const normalizedUrl = new URL(request.url);
   normalizedUrl.search = '';
   const normalizedRequest = new Request(normalizedUrl.toString(), { method: 'GET' });
@@ -140,12 +133,10 @@ async function handleSameOrigin(request) {
   const cached = await caches.match(normalizedRequest) || await caches.match(request);
 
   if (cached) {
-    // Stale-while-revalidate：返回緩存，背景更新
     updateCache(request, normalizedRequest).catch(() => {});
     return cached;
   }
 
-  // 緩存冇有，從網絡取
   try {
     const response = await fetch(request);
     if (response.ok && response.status < 400) {
@@ -182,9 +173,7 @@ async function updateCache(originalRequest, storeAsRequest) {
       const cache = await caches.open(CACHE_NAME);
       await cache.put(storeAsRequest || originalRequest, response);
     }
-  } catch (err) {
-    // 靜默失敗，唔影響用戶
-  }
+  } catch (err) {}
 }
 
 // 離線 fallback HTML

@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>澳門社區消費大獎賞 2026 🎉</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#764ba2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="消費獎賞">
+    <meta name="application-name" content="消費獎賞">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#764ba2">
+    <link rel="manifest" href="manifest.json">
+    <!-- Favicon -->
+    <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <!-- Apple Touch Icon (iOS requires PNG) -->
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
+    <!-- Safe area support for iPhone notch -->
+    <style>
+        /* Safe area padding for iPhone */
+        .header {
+            padding-top: calc(20px + env(safe-area-inset-top, 0px));
+            padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        }
+        .nav {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .container {
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        }
+    </style>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 1.5em; color: #764ba2; }
+        .header .subtitle { color: #888; font-size: 0.85em; margin-top: 4px; }
+        .countdown {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .countdown.over { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .countdown .days { font-size: 1.5em; }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            background: rgba(255,255,255,0.95);
+            border-bottom: 2px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            overflow-x: auto;
+        }
+        .nav button {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 8px;
+            border: none;
+            background: none;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #888;
+            border-bottom: 3px solid transparent;
+        }
+        .nav button.active {
+            color: #764ba2;
+            border-bottom-color: #764ba2;
+            font-weight: bold;
+        }
+        .nav button:hover { background: #f5f5f5; }
+
+        /* Content */
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            color: #764ba2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .stat-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-item.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stat-value { font-size: 1.8em; font-weight: bold; }
+        .stat-label { font-size: 0.75em; opacity: 0.8; margin-top: 4px; }
+
+        /* Form */
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(118,75,162,0.4); }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+            margin-top: 8px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        /* Voucher List */
+        .voucher {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .voucher.used {
+            opacity: 0.5;
+            background: #f9f9f9;
+        }
+        .voucher.expired {
+            opacity: 0.4;
+            background: #fff0f0;
+            border-color: #ffcccc;
+        }
+        .voucher-amount {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        .voucher-info { flex: 1; margin-left: 12px; }
+        .voucher-wallet { font-size: 0.75em; color: #888; }
+        .voucher-date { font-size: 0.7em; color: #aaa; margin-top: 2px; }
+        .voucher-actions { display: flex; gap: 8px; }
+        .voucher-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+        .btn-use { background: #43e97b; color: white; }
+        .btn-use:disabled { background: #ccc; }
+
+        /* Record List */
+        .record {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .record:last-child { border-bottom: none; }
+        .record-amount { font-weight: bold; font-size: 1.1em; }
+        .record-detail { font-size: 0.75em; color: #888; }
+        .record-date { font-size: 0.7em; color: #aaa; }
+        .record .delete-btn {
+            color: #ff6b6b;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        /* Week Selector */
+        .week-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .week-btn {
+            padding: 8px 16px;
+            border: 2px solid #eee;
+            border-radius: 20px;
+            background: white;
+            font-size: 0.8em;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        .week-btn.active {
+            background: #764ba2;
+            color: white;
+            border-color: #764ba2;
+        }
+        .week-btn.current { border-color: #764ba2; font-weight: bold; }
+
+        /* Info Page */
+        .info-section { margin-bottom: 20px; }
+        .info-section h3 {
+            font-size: 1em;
+            color: #764ba2;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #f0e6f6;
+        }
+        .info-section p, .info-section li {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #555;
+        }
+        .info-section ul { padding-left: 20px; }
+        .info-section li { margin-bottom: 4px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f0e6f6;
+            color: #764ba2;
+            border-radius: 20px;
+            font-size: 0.75em;
+            margin: 3px;
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #aaa;
+        }
+        .empty .emoji { font-size: 3em; margin-bottom: 12px; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9em;
+            z-index: 1000;
+            transition: transform 0.4s;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* Confirm Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+        .modal h3 { margin-bottom: 12px; color: #333; }
+        .modal p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer; font-size: 0.9em; }
+        .modal-cancel { background: #eee; color: #666; }
+        .modal-confirm { background: #ff6b6b; color: white; }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .stat-value { font-size: 1.4em; }
+            .header h1 { font-size: 1.2em; }
+        }
+
+        /* Weekly History */
+        .weekly-summary {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .weekly-summary:hover { border-color: #764ba2; }
+        .weekly-summary .week-label {
+            font-weight: bold;
+            color: #764ba2;
+            font-size: 0.95em;
+            min-width: 80px;
+        }
+        .weekly-summary .week-stats {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .weekly-summary .week-stat {
+            font-size: 0.75em;
+            color: #888;
+        }
+        .weekly-summary .week-stat strong {
+            color: #333;
+        }
+        .weekly-summary .week-expand {
+            font-size: 0.85em;
+            color: #aaa;
+            transition: transform 0.3s;
+        }
+        .weekly-summary.expanded .week-expand {
+            transform: rotate(90deg);
+        }
+        .weekly-details {
+            display: none;
+            padding: 8px 12px 12px;
+            margin-top: -6px;
+            margin-bottom: 10px;
+        }
+        .weekly-details.show { display: block; }
+        .weekly-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.85em;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .weekly-detail-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 澳門社區消費大獎賞 2026</h1>
+        <div class="subtitle">4月10日 - 6月18日 ｜ 總值 4 億 MOP</div>
+    </div>
+
+    <div class="countdown" id="countdown">
+        距離活動開始仲有 <span class="days" id="countdown-days">--</span> 日
+    </div>
+
+    <div class="nav">
+        <button class="active" onclick="switchPage('home')">📊 總覽</button>
+        <button onclick="switchPage('spend')">💰 消費</button>
+        <button onclick="switchPage('draw')">📝 輸入</button>
+        <button onclick="switchPage('vouchers')">🎫 券</button>
+        <button onclick="switchPage('info')">📋 規則</button>
+    </div>
+
+    <div class="container">
+        <!-- HOME PAGE -->
+        <div class="page active" id="page-home">
+            <div class="card">
+                <h2>🏆 活動累計</h2>
+                <div class="stats-grid">
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="total-spent">0</div>
+                        <div class="stat-label">總消費 (MOP)</div>
+                    </div>
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="total-vouchers">0</div>
+                        <div class="stat-label">總券額 (MOP)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-draws">0</div>
+                        <div class="stat-label">總抽獎次數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-used">0</div>
+                        <div class="stat-label">總核銷 (MOP)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📈 本週統計</h2>
+                <div class="week-selector" id="week-selector"></div>
+                <div class="stats-grid">
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="stat-spent">0</div>
+                        <div class="stat-label">消費 (MOP)</div>
+                    </div>
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="stat-vouchers">0</div>
+                        <div class="stat-label">獲得券 (MOP)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-draws">0</div>
+                        <div class="stat-label">抽獎次數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-used">0</div>
+                        <div class="stat-label">已核銷 (MOP)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💰 各錢包狀態</h2>
+                <div id="wallet-status"></div>
+            </div>
+        </div>
+
+        <!-- SPEND PAGE -->
+        <div class="page" id="page-spend">
+            <div class="card">
+                <h2>➕ 記錄消費</h2>
+                <div class="form-group">
+                    <label>支付工具</label>
+                    <select id="spend-wallet">
+                        <option value="MPay">MPay 澳門錢包</option>
+                        <option value="支付寶">支付寶（澳門）</option>
+                        <option value="中銀">澳門中銀手機銀行</option>
+                        <option value="工銀">工銀 e 支付</option>
+                        <option value="豐付寶">豐付寶</option>
+                        <option value="廣發">廣發移動支付錢包</option>
+                        <option value="LusoPay">LusoPay（國際銀行）</option>
+                        <option value="UePay">極易付 UePay</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>消費金額 (MOP)</label>
+                    <input type="number" id="spend-amount" placeholder="輸入金額" min="0.1" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>商戶名稱（選填）</label>
+                    <input type="text" id="spend-merchant" placeholder="例如：大昌食品">
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="spend-date">
+                </div>
+                <button class="btn btn-primary" onclick="addSpending()">記錄消費</button>
+            </div>
+
+            <div class="card">
+                <h2>📜 消費記錄</h2>
+                <div id="spending-list"></div>
+            </div>
+        </div>
+
+        <!-- DRAW PAGE -->
+        <div class="page" id="page-draw">
+            <div class="card">
+                <h2>📝 記錄抽獎結果</h2>
+                <p style="font-size: 0.85em; color: #888; margin-bottom: 16px;">
+                    消費滿 50 MOP 後去官方平台抽獎，然後喺度記錄結果<br>
+                    每週每種支付工具上限 3 次<br>
+                    券額：10 / 20 / 50 / 100 / 200 MOP（可能唔中獎）
+                </p>
+                <div class="form-group">
+                    <label>用邊個錢包抽</label>
+                    <select id="draw-wallet">
+                        <option value="MPay">MPay 澳門錢包</option>
+                        <option value="支付寶">支付寶（澳門）</option>
+                        <option value="中銀">澳門中銀手機銀行</option>
+                        <option value="工銀">工銀 e 支付</option>
+                        <option value="豐付寶">豐付寶</option>
+                        <option value="廣發">廣發移動支付錢包</option>
+                        <option value="LusoPay">LusoPay（國際銀行）</option>
+                        <option value="UePay">極易付 UePay</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>剩餘抽獎次數（本週）</label>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #764ba2; padding: 10px;" id="draws-remaining">3</div>
+                </div>
+                <div class="form-group">
+                    <label>抽獎結果</label>
+                    <select id="draw-result-select">
+                        <option value="0">💨 唔中獎</option>
+                        <option value="10">💰 $10 MOP</option>
+                        <option value="20">💰 $20 MOP</option>
+                        <option value="50">💰 $50 MOP</option>
+                        <option value="100">💰 $100 MOP</option>
+                        <option value="200">💰 $200 MOP</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="recordDraw()" id="draw-btn" style="max-width: 250px; margin: 0 auto;">
+                    📝 輸入
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>📋 本週抽獎記錄</h2>
+                <div id="draw-history"></div>
+            </div>
+
+            <div class="card">
+                <h2>📊 歷史每週紀錄</h2>
+                <div id="draw-weekly-history"></div>
+            </div>
+        </div>
+
+        <!-- VOUCHERS PAGE -->
+        <div class="page" id="page-vouchers">
+            <div class="card">
+                <h2>🎫 優惠券管理</h2>
+                <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap: wrap;">
+                    <button class="week-btn active" onclick="filterVouchers('all')">全部</button>
+                    <button class="week-btn" onclick="filterVouchers('active')">可用</button>
+                    <button class="week-btn" onclick="filterVouchers('used')">已用</button>
+                    <button class="week-btn" onclick="filterVouchers('expired')">過期</button>
+                </div>
+                <div id="voucher-list"></div>
+            </div>
+        </div>
+
+        <!-- INFO PAGE -->
+        <div class="page" id="page-info">
+            <div class="card">
+                <div class="info-section">
+                    <h3>📅 活動時間</h3>
+                    <p><strong>2026年4月10日（五）至 6月18日（四）</strong>，共10週</p>
+                    <ul>
+                        <li>🏆 抽獎期：每週五、六、日</li>
+                        <li>✅ 核銷期：緊接嘅週一至週四</li>
+                        <li>🔄 每週五凌晨：抽獎機會清零</li>
+                        <li>🔄 每週五凌晨：未用券過期</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h3>🎰 抽獎規則</h3>
+                    <ul>
+                        <li>週五至週日單筆消費滿 <strong>50 MOP</strong></li>
+                        <li>每筆可抽 <strong>3 次</strong></li>
+                        <li>每週每種支付工具上限 <strong>3 次</strong></li>
+                        <li>券額：<span class="tag">10</span><span class="tag">20</span><span class="tag">50</span><span class="tag">100</span><span class="tag">200 MOP</span></li>
+                        <li>⚠️ 有機會唔中獎！</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h3>✅ 核銷規則</h3>
+                    <ul>
+                        <li>消費需為券額嘅 <strong>3 倍以上</strong></li>
+                        <li>例：50元券 → 需消費 150元以上</li>
+                        <li>自動疊加（同一錢包）</li>
+                        <li>適用全澳 20,000+ 商戶</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h3>💳 8 種支付工具</h3>
+                    <div>
+                        <span class="tag">MPay</span>
+                        <span class="tag">支付寶（澳門）</span>
+                        <span class="tag">中銀手機銀行</span>
+                        <span class="tag">工銀 e 支付</span>
+                        <span class="tag">豐付寶</span>
+                        <span class="tag">廣發</span>
+                        <span class="tag">LusoPay</span>
+                        <span class="tag">UePay</span>
+                    </div>
+                </div>
+                <div class="info-section">
+                    <h3>💰 額外大獎</h3>
+                    <p>核銷期內單筆實付滿 50 MOP，可參加每週抽獎</p>
+                    <p style="font-size: 1.2em; font-weight: bold; color: #f5576c; margin-top: 8px;">🏆 每週 3 名 × 8,000 MOP 現金</p>
+                </div>
+                <div class="info-section">
+                    <h3>🚫 排除商戶</h3>
+                    <ul>
+                        <li>不可抽獎不可核銷：公用事業、公共部門</li>
+                        <li>可抽獎但不可核銷：大型超市、醫療、教育、加油站、停車場、公共交通、金融、旅行社、物管、博彩等</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h3>👴 長者 / 殘疾優惠</h3>
+                    <ul>
+                        <li>65歲以上持長者卡 / 殘疾卡</li>
+                        <li>一次性 <strong>500 MOP</strong> 立減額</li>
+                        <li>每次消費一半從立減額扣，一半從卡餘額扣</li>
+                        <li>4月10日起喺全澳 100+ 服務點拍卡領取</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💾 數據備份</h2>
+                <p style="font-size:0.85em;color:#888;margin-bottom:14px;">定期備份數據，防止意外丟失</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-success" onclick="exportData()" style="flex:1;min-width:120px;">📤 導出備份</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('import-file').click()" style="flex:1;min-width:120px;">📥 匯入備份</button>
+                </div>
+                <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+                <div id="backup-info" style="margin-top:12px;font-size:0.8em;color:#888;"></div>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <button class="btn btn-danger" onclick="showResetModal()">🗑️ 清除所有資料</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Offline Status Bar -->
+    <div id="offline-bar" style="display:none; position:fixed; top:0; left:0; right:0; background:#ff6b6b; color:white; padding:8px 16px; z-index:999; text-align:center; font-size:0.85em; align-items:center; justify-content:center; gap:6px; padding-top:calc(8px + env(safe-area-inset-top, 0px));">
+        <span>📡</span> <span>目前離線模式 — 已緩存嘅資料仍然可用</span>
+    </div>
+
+    <!-- PWA Install Banner -->
+    <div id="install-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:16px 20px; z-index:300; text-align:center; padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));">
+        <div style="font-size:0.95em; margin-bottom:8px;">📲 加到主畫面，用起嚟好似 App 咁方便！</div>
+        <div style="display:flex; gap:8px; justify-content:center;">
+            <button onclick="dismissInstall()" style="padding:8px 16px; border:1px solid rgba(255,255,255,0.5); background:none; color:white; border-radius:8px; cursor:pointer;">稍後</button>
+            <button onclick="installApp()" style="padding:8px 16px; border:none; background:white; color:#764ba2; border-radius:8px; cursor:pointer; font-weight:bold;">安裝</button>
+        </div>
+    </div>
+
+    <!-- Install Hint Modal -->
+    <div class="modal-overlay" id="install-modal">
+        <div class="modal">
+            <h3>📲 如何加到主畫面</h3>
+            <div style="text-align:left; font-size:0.9em; color:#555; margin-bottom:20px;">
+                <p style="margin-bottom:12px;"><strong>Safari：</strong></p>
+                <ol style="padding-left:20px; line-height:2;">
+                    <li>按底部<strong>「分享」</strong>按鈕 📤</li>
+                    <li>向下拉，揀<strong>「加到主畫面」</strong></li>
+                    <li>按<strong>「加入」</strong></li>
+                </ol>
+                <p style="margin:12px 0;"><strong>Chrome：</strong></p>
+                <ol style="padding-left:20px; line-height:2;">
+                    <li>按右上角<strong>「⋯」</strong>選單</li>
+                    <li>揀<strong>「加到主畫面」</strong></li>
+                    <li>按<strong>「安裝」</strong></li>
+                </ol>
+                <p style="margin-top:12px; font-size:0.85em; color:#888;">加完之後，主畫面會出現一個 🪙 圖標，一按就開！</p>
+            </div>
+            <button class="btn btn-primary" onclick="closeInstallModal()">知道喇！</button>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h3 id="modal-title">確認</h3>
+            <p id="modal-msg">確定要清除所有資料嗎？此操作不可撤銷。</p>
+            <div class="modal-btns">
+                <button class="modal-cancel" onclick="closeModal()">取消</button>
+                <button class="modal-confirm" id="modal-confirm-btn" onclick="confirmReset()">確認清除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== DATA ==========
+        const STORAGE_KEY = 'macau-spending-2026';
+        const ACTIVITY_START = new Date('2026-04-10T00:00:00+08:00');
+        const ACTIVITY_END = new Date('2026-06-18T23:59:59+08:00');
+        const VALID_VOUCHER_AMOUNTS = [10, 20, 50, 100, 200];
+        const MAX_DRAWS_PER_WEEK_PER_WALLET = 3;
+
+        let data = loadData();
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch(e) {}
+            return { spendings: [], vouchers: [], draws: [] };
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // ========== WEEK CALCULATION ==========
+        function getWeekNumber(date) {
+            const start = new Date(ACTIVITY_START);
+            const diff = date.getTime() - start.getTime();
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            if (days < 0) return 0;
+            return Math.floor(days / 7) + 1;
+        }
+
+        function getWeekDates(weekNum) {
+            const start = new Date(ACTIVITY_START);
+            const wStart = new Date(start.getTime() + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000);
+            const wEnd = new Date(wStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+            return { start: wStart, end: wEnd };
+        }
+
+        function formatDate(d) {
+            const m = d.getMonth() + 1;
+            const day = d.getDate();
+            return `${m}/${day}`;
+        }
+
+        function getCurrentWeek() {
+            return getWeekNumber(new Date());
+        }
+
+        // ========== NAVIGATION ==========
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            // 用 data-page 屬性搵到正確嘅按鈕
+            document.querySelectorAll('.nav button').forEach(b => {
+                if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + page + "'")) {
+                    b.classList.add('active');
+                }
+            });
+
+            if (page === 'home') renderHome();
+            if (page === 'spend') renderSpendings();
+            if (page === 'draw') renderDrawPage();
+            if (page === 'vouchers') renderVouchers();
+        }
+
+        // ========== COUNTDOWN ==========
+        function updateCountdown() {
+            const now = new Date();
+            const el = document.getElementById('countdown');
+            const daysEl = document.getElementById('countdown-days');
+
+            if (now < ACTIVITY_START) {
+                const diff = ACTIVITY_START - now;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                daysEl.textContent = days;
+                el.className = 'countdown';
+            } else if (now > ACTIVITY_END) {
+                el.innerHTML = '🎉 活動已經完結啦！';
+                el.className = 'countdown over';
+            } else {
+                const diff = ACTIVITY_END - now;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                el.innerHTML = `🔥 活動進行中！仲有 <span class="days">${days}</span> 日`;
+                el.className = 'countdown';
+            }
+        }
+
+        // ========== HOME PAGE ==========
+        let selectedWeek = 0; // 0 = current week
+
+        function renderHome() {
+            // ===== 累計統計 =====
+            const totalSpent = data.spendings.reduce((sum, s) => sum + s.amount, 0);
+            const totalVoucherValue = data.vouchers.reduce((sum, v) => sum + v.amount, 0);
+            const totalDrawCount = data.draws.length;
+            const totalUsedValue = data.vouchers.filter(v => v.used).reduce((sum, v) => sum + v.amount, 0);
+
+            document.getElementById('total-spent').textContent = totalSpent.toFixed(0);
+            document.getElementById('total-vouchers').textContent = totalVoucherValue.toFixed(0);
+            document.getElementById('total-draws').textContent = totalDrawCount;
+            document.getElementById('total-used').textContent = totalUsedValue.toFixed(0);
+
+            // ===== 本週統計 =====
+            const currentWeek = getCurrentWeek();
+            if (selectedWeek === 0) selectedWeek = currentWeek;
+
+            // Week selector
+            const selector = document.getElementById('week-selector');
+            let html = `<button class="week-btn ${selectedWeek === 0 ? 'active' : ''}" onclick="selectWeek(0)">今週</button>`;
+            for (let i = 1; i <= 10; i++) {
+                const { start, end } = getWeekDates(i);
+                html += `<button class="week-btn ${selectedWeek === i ? 'active' : ''} ${i === currentWeek ? 'current' : ''}" 
+                          onclick="selectWeek(${i})">W${i} (${formatDate(start)}-${formatDate(end)})</button>`;
+            }
+            selector.innerHTML = html;
+
+            // Stats
+            const week = selectedWeek === 0 ? currentWeek : selectedWeek;
+            const { start, end } = getWeekDates(week);
+
+            const weekSpendings = data.spendings.filter(s => {
+                const d = new Date(s.date);
+                return d >= start && d <= end;
+            });
+            const weekSpent = weekSpendings.reduce((sum, s) => sum + s.amount, 0);
+
+            const weekVouchers = data.vouchers.filter(v => {
+                const d = new Date(v.drawDate);
+                return d >= start && d <= end;
+            });
+            const weekVoucherValue = weekVouchers.reduce((sum, v) => sum + v.amount, 0);
+
+            const weekDraws = data.draws.filter(d => {
+                const dt = new Date(d.date);
+                return dt >= start && dt <= end;
+            });
+
+            const usedVouchers = weekVouchers.filter(v => v.used);
+            const totalUsed = usedVouchers.reduce((sum, v) => sum + v.amount, 0);
+
+            document.getElementById('stat-spent').textContent = weekSpent.toFixed(0);
+            document.getElementById('stat-vouchers').textContent = weekVoucherValue.toFixed(0);
+            document.getElementById('stat-draws').textContent = weekDraws.length;
+            document.getElementById('stat-used').textContent = totalUsed.toFixed(0);
+
+            // Wallet status
+            const wallets = ['MPay', '支付寶', '中銀', '工銀', '豐付寶', '廣發', 'LusoPay', 'UePay'];
+            let walletHtml = '';
+            wallets.forEach(w => {
+                const wDraws = weekDraws.filter(d => d.wallet === w).length;
+                const remaining = Math.max(0, MAX_DRAWS_PER_WEEK_PER_WALLET - wDraws);
+                const wVouchers = weekVouchers.filter(v => v.wallet === w && !v.used && !v.expired);
+                const activeVoucherValue = wVouchers.reduce((s, v) => s + v.amount, 0);
+
+                if (wDraws > 0 || activeVoucherValue > 0) {
+                    walletHtml += `
+                        <div class="voucher">
+                            <div>
+                                <div style="font-weight:bold;">${w}</div>
+                                <div class="voucher-wallet">抽獎 ${wDraws}/${MAX_DRAWS_PER_WEEK_PER_WALLET}｜可用券 ${activeVoucherValue} MOP</div>
+                            </div>
+                        </div>`;
+                }
+            });
+            if (!walletHtml) {
+                walletHtml = '<div class="empty"><div class="emoji">📋</div>今週仲未有記錄，快啲去消費啦！</div>';
+            }
+            document.getElementById('wallet-status').innerHTML = walletHtml;
+        }
+
+        function selectWeek(w) {
+            selectedWeek = w;
+            renderHome();
+        }
+
+        // ========== SPENDING ==========
+        function addSpending() {
+            const wallet = document.getElementById('spend-wallet').value;
+            const amount = parseFloat(document.getElementById('spend-amount').value);
+            const merchant = document.getElementById('spend-merchant').value.trim();
+            const date = document.getElementById('spend-date').value;
+
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效金額！');
+                return;
+            }
+            if (!date) {
+                showToast('請選擇日期！');
+                return;
+            }
+
+            const spending = {
+                id: Date.now(),
+                wallet,
+                amount,
+                merchant: merchant || '未填寫',
+                date
+            };
+            data.spendings.unshift(spending);
+            saveData();
+
+            // Check if qualifies for draws
+            if (amount >= 50) {
+                const weekDraws = getWeekDrawsForWallet(wallet);
+                const remaining = Math.max(0, MAX_DRAWS_PER_WEEK_PER_WALLET - weekDraws.length);
+                if (remaining > 0) {
+                    showToast(`✅ 已記錄！消費滿50元，可以去抽獎啦！剩餘 ${remaining} 次抽獎機會`);
+                } else {
+                    showToast('✅ 已記錄！但今週呢個錢包嘅抽獎次數已用完');
+                }
+            } else {
+                showToast('✅ 已記錄！消費未滿50 MOP，無法抽獎');
+            }
+
+            document.getElementById('spend-amount').value = '';
+            document.getElementById('spend-merchant').value = '';
+            renderSpendings();
+        }
+
+        function renderSpendings() {
+            const list = document.getElementById('spending-list');
+            if (data.spendings.length === 0) {
+                list.innerHTML = '<div class="empty"><div class="emoji">💰</div>仲未有消費記錄</div>';
+                return;
+            }
+
+            // Set default date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('spend-date').value = today;
+
+            let html = '';
+            data.spendings.forEach(s => {
+                const qualifies = s.amount >= 50 ? '🎉' : '';
+                html += `
+                    <div class="record">
+                        <div>
+                            <div class="record-amount">${qualifies} $${s.amount.toFixed(1)}</div>
+                            <div class="record-detail">${s.wallet}｜${s.merchant}</div>
+                            <div class="record-date">${s.date}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteSpending(${s.id})">✕</button>
+                    </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function deleteSpending(id) {
+            data.spendings = data.spendings.filter(s => s.id !== id);
+            saveData();
+            renderSpendings();
+            showToast('已刪除');
+        }
+
+        // ========== DRAW ==========
+        function getWeekDrawsForWallet(wallet) {
+            const now = new Date();
+            const currentWeek = getCurrentWeek();
+            const { start, end } = getWeekDates(currentWeek);
+            return data.draws.filter(d => {
+                const dt = new Date(d.date);
+                return dt >= start && dt <= end && d.wallet === wallet;
+            });
+        }
+
+        function renderDrawPage() {
+            const wallet = document.getElementById('draw-wallet').value;
+            updateDrawsRemaining(wallet);
+            renderDrawHistory();
+            renderWeeklyHistory();
+        }
+
+        function updateDrawsRemaining(wallet) {
+            const weekDraws = getWeekDrawsForWallet(wallet);
+            const remaining = Math.max(0, MAX_DRAWS_PER_WEEK_PER_WALLET - weekDraws.length);
+            document.getElementById('draws-remaining').textContent = remaining;
+
+            const btn = document.getElementById('draw-btn');
+            btn.disabled = remaining <= 0;
+            if (remaining <= 0) {
+                btn.textContent = '😢 今週次數已用完';
+            } else {
+                btn.textContent = '📝 輸入';
+            }
+        }
+
+        document.getElementById('draw-wallet').addEventListener('change', function() {
+            updateDrawsRemaining(this.value);
+        });
+
+        function recordDraw() {
+            const wallet = document.getElementById('draw-wallet').value;
+            const weekDraws = getWeekDrawsForWallet(wallet);
+            if (weekDraws.length >= MAX_DRAWS_PER_WEEK_PER_WALLET) {
+                showToast('今週呢個錢包嘅抽獎次數已用完！');
+                return;
+            }
+
+            const resultSelect = document.getElementById('draw-result-select');
+            const finalVal = parseInt(resultSelect.value);
+
+            // Record draw
+            data.draws.push({
+                id: Date.now(),
+                wallet: wallet,
+                date: new Date().toISOString().split('T')[0],
+                result: finalVal
+            });
+
+            // If won, add voucher
+            if (finalVal > 0) {
+                const currentWeek = getCurrentWeek();
+                const { start, end } = getWeekDates(currentWeek);
+                const expiryDate = new Date(end.getTime() + 4 * 24 * 60 * 60 * 1000); // Thursday
+                data.vouchers.push({
+                    id: Date.now() + 1,
+                    amount: finalVal,
+                    wallet: wallet,
+                    drawDate: new Date().toISOString().split('T')[0],
+                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    used: false,
+                    expired: false
+                });
+                showToast(`🎉 記錄成功！獲得 $${finalVal} 優惠券`);
+            } else {
+                showToast('💨 記錄成功，呢次唔中獎');
+            }
+
+            saveData();
+            updateDrawsRemaining(wallet);
+            renderDrawHistory();
+
+            // Reset select to "唔中獎"
+            resultSelect.value = '0';
+        }
+
+        function renderDrawHistory() {
+            const historyEl = document.getElementById('draw-history');
+            const currentWeek = getCurrentWeek();
+            const { start, end } = getWeekDates(currentWeek);
+            const weekDraws = data.draws.filter(d => {
+                const dt = new Date(d.date);
+                return dt >= start && dt <= end;
+            });
+
+            if (weekDraws.length === 0) {
+                historyEl.innerHTML = '<div class="empty"><div class="emoji">🎰</div>今週仲未抽過獎</div>';
+                return;
+            }
+
+            let html = '';
+            weekDraws.forEach(d => {
+                const result = d.result === 0 ? '💨 唔中' : `💰 $${d.result}`;
+                html += `
+                    <div class="record">
+                        <div>
+                            <div class="record-amount">${result}</div>
+                            <div class="record-detail">${d.wallet}</div>
+                            <div class="record-date">${d.date}</div>
+                        </div>
+                    </div>`;
+            });
+            historyEl.innerHTML = html;
+        }
+
+        // ========== WEEKLY HISTORY ==========
+        function renderWeeklyHistory() {
+            const historyEl = document.getElementById('draw-weekly-history');
+            const currentWeek = getCurrentWeek();
+
+            if (data.draws.length === 0) {
+                historyEl.innerHTML = '<div class="empty"><div class="emoji">📊</div>仲未有抽獎紀錄</div>';
+                return;
+            }
+
+            let html = '';
+            // 從最高週開始，到 W1
+            for (let i = currentWeek; i >= 1; i--) {
+                const { start, end } = getWeekDates(i);
+                const weekDraws = data.draws.filter(d => {
+                    const dt = new Date(d.date);
+                    return dt >= start && dt <= end;
+                });
+
+                if (weekDraws.length === 0) continue;
+
+                const wonCount = weekDraws.filter(d => d.result > 0).length;
+                const totalWon = weekDraws.reduce((s, d) => s + d.result, 0);
+                const hitRate = Math.round((wonCount / weekDraws.length) * 100);
+                const isCurrent = i === currentWeek;
+
+                // 按錢包分組
+                const walletGroups = {};
+                weekDraws.forEach(d => {
+                    if (!walletGroups[d.wallet]) walletGroups[d.wallet] = { draws: 0, won: 0, total: 0 };
+                    walletGroups[d.wallet].draws++;
+                    if (d.result > 0) {
+                        walletGroups[d.wallet].won++;
+                        walletGroups[d.wallet].total += d.result;
+                    }
+                });
+
+                html += `<div class="weekly-summary ${isCurrent ? '' : ''}" onclick="toggleWeekDetail('week-detail-${i}', this)">
+                    <div class="week-label">${isCurrent ? '今週' : 'W' + i}</div>
+                    <div class="week-stats">
+                        <span class="week-stat">抽 <strong>${weekDraws.length}</strong> 次</span>
+                        <span class="week-stat">中 <strong>${wonCount}</strong> 張</span>
+                        <span class="week-stat">共 <strong>$${totalWon}</strong></span>
+                        <span class="week-stat">命中率 <strong>${hitRate}%</strong></span>
+                    </div>
+                    <div class="week-expand">▶</div>
+                </div>`;
+
+                // 展開詳情
+                html += `<div class="weekly-details" id="week-detail-${i}">`;
+                Object.entries(walletGroups).forEach(([wallet, info]) => {
+                    const walletHitRate = info.draws > 0 ? Math.round((info.won / info.draws) * 100) : 0;
+                    html += `<div class="weekly-detail-row">
+                        <span>${wallet}</span>
+                        <span>抽${info.draws}次 / 中${info.won}張 / $${info.total} / ${walletHitRate}%</span>
+                    </div>`;
+                });
+                // 每筆明細
+                weekDraws.forEach(d => {
+                    const result = d.result === 0 ? '💨 唔中' : `💰 $${d.result}`;
+                    html += `<div class="weekly-detail-row" style="font-size:0.8em; color:#aaa;">
+                        <span>${result}</span>
+                        <span>${d.date}</span>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+
+            if (!html) {
+                html = '<div class="empty"><div class="emoji">📊</div>仲未有抽獎紀錄</div>';
+            }
+
+            historyEl.innerHTML = html;
+        }
+
+        function toggleWeekDetail(id, el) {
+            const detail = document.getElementById(id);
+            detail.classList.toggle('show');
+            el.classList.toggle('expanded');
+        }
+
+        // ========== VOUCHERS ==========
+        let voucherFilter = 'all';
+
+        function filterVouchers(filter) {
+            voucherFilter = filter;
+            document.querySelectorAll('#page-vouchers .week-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#page-vouchers .week-btn').forEach(b => {
+                if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + filter + "'")) {
+                    b.classList.add('active');
+                }
+            });
+            renderVouchers();
+        }
+
+        function renderVouchers() {
+            // Expire old vouchers
+            const today = new Date().toISOString().split('T')[0];
+            data.vouchers.forEach(v => {
+                if (!v.used && v.expiryDate < today) {
+                    v.expired = true;
+                }
+            });
+            saveData();
+
+            let vouchers = [...data.vouchers];
+            if (voucherFilter === 'active') vouchers = vouchers.filter(v => !v.used && !v.expired);
+            else if (voucherFilter === 'used') vouchers = vouchers.filter(v => v.used);
+            else if (voucherFilter === 'expired') vouchers = vouchers.filter(v => v.expired);
+
+            const list = document.getElementById('voucher-list');
+            if (vouchers.length === 0) {
+                list.innerHTML = '<div class="empty"><div class="emoji">🎫</div>冇優惠券</div>';
+                return;
+            }
+
+            // Total active value
+            const activeValue = data.vouchers.filter(v => !v.used && !v.expired)
+                .reduce((s, v) => s + v.amount, 0);
+            let html = `<div style="text-align:center; margin-bottom:12px; font-size:0.9em; color:#764ba2;">
+                💰 可用券總值：<strong>${activeValue} MOP</strong></div>`;
+
+            vouchers.sort((a, b) => {
+                if (a.expired !== b.expired) return a.expired ? 1 : -1;
+                if (a.used !== b.used) return a.used ? 1 : -1;
+                return b.amount - a.amount;
+            });
+
+            vouchers.forEach(v => {
+                let cls = '';
+                if (v.used) cls = 'used';
+                else if (v.expired) cls = 'expired';
+
+                let statusText = '';
+                let useBtn = '';
+                if (v.used) {
+                    statusText = '✅ 已核銷';
+                } else if (v.expired) {
+                    statusText = '❌ 已過期';
+                } else {
+                    statusText = `需消費 $${v.amount * 3} 以上`;
+                    useBtn = `<button class="btn-use" onclick="useVoucher(${v.id})">核銷</button>`;
+                }
+
+                html += `
+                    <div class="voucher ${cls}">
+                        <div class="voucher-amount">$${v.amount}</div>
+                        <div class="voucher-info">
+                            <div class="voucher-wallet">${v.wallet}｜${statusText}</div>
+                            <div class="voucher-date">到期：${v.expiryDate}</div>
+                        </div>
+                        <div class="voucher-actions">${useBtn}</div>
+                    </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function useVoucher(id) {
+            const v = data.vouchers.find(v => v.id === id);
+            if (v) {
+                v.used = true;
+                saveData();
+                renderVouchers();
+                showToast(`✅ 已核銷 $${v.amount} 優惠券`);
+            }
+        }
+
+        // ========== UTILS ==========
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function showResetModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        function confirmReset() {
+            data = { spendings: [], vouchers: [], draws: [] };
+            saveData();
+            closeModal();
+            showToast('已清除所有資料');
+            renderHome();
+        }
+
+        // ========== INIT ==========
+        function init() {
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+            renderHome();
+
+            // Set default date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('spend-date').value = today;
+
+            // Draw page wallet change listener
+            document.getElementById('draw-wallet').addEventListener('change', function() {
+                updateDrawsRemaining(this.value);
+            });
+        }
+
+        init();
+
+        // ========== 數據備份/恢復 ==========
+        function exportData() {
+            const exportObj = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                data: data
+            };
+            const json = JSON.stringify(exportObj, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `macau-spending-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ 備份已導出！');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.data && imported.data.spendings !== undefined) {
+                        data = imported.data;
+                        saveData();
+                        renderHome();
+                        showToast(`✅ 匯入成功！恢復 ${data.spendings.length} 條消費記錄`);
+                        document.getElementById('backup-info').textContent =
+                            `上次備份：${imported.exportDate ? new Date(imported.exportDate).toLocaleString('zh-HK') : '未知'}`;
+                    } else {
+                        showToast('❌ 檔案格式錯誤');
+                    }
+                } catch (err) {
+                    showToast('❌ 無法讀取備份檔案');
+                }
+            };
+            reader.readAsText(file);
+            // 重置 input，允許再次選同一個檔案
+            event.target.value = '';
+        }
+
+        // ========== PWA Service Worker ==========
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const reg = await navigator.serviceWorker.register('./sw.js');
+                    console.log('SW registered:', reg.scope);
+
+                    // 監聽 SW 更新
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // 新版本已就緒，提示用戶刷新
+                                showUpdateBanner();
+                            }
+                        });
+                    });
+
+                    // 監聽 SW 發來嘅消息
+                    navigator.serviceWorker.addEventListener('message', (event) => {
+                        if (event.data && event.data.type === 'SW_UPDATED') {
+                            console.log('SW updated to', event.data.version);
+                        }
+                    });
+
+                    // 定期檢查更新（每30分鐘）
+                    setInterval(() => reg.update(), 30 * 60 * 1000);
+
+                } catch (err) {
+                    console.warn('SW registration failed:', err);
+                }
+            });
+        }
+
+        function showUpdateBanner() {
+            // 如果已有更新 banner 就不重複顯示
+            if (document.getElementById('update-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'update-banner';
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#43e97b;color:#1a6b3a;padding:10px 16px;z-index:9999;text-align:center;font-size:0.9em;display:flex;align-items:center;justify-content:center;gap:12px;';
+            banner.innerHTML = `<span>🔄 有新版本可用</span><button onclick="location.reload()" style="padding:4px 14px;border:none;background:#1a6b3a;color:white;border-radius:20px;cursor:pointer;font-size:0.85em;">立即更新</button><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:1.2em;cursor:pointer;color:#1a6b3a;">✕</button>`;
+            document.body.prepend(banner);
+        }
+
+        // ========== Offline Detection ==========
+        function updateOnlineStatus() {
+            const offlineBar = document.getElementById('offline-bar');
+            if (!navigator.onLine) {
+                offlineBar.style.display = 'flex';
+            } else {
+                offlineBar.style.display = 'none';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // ========== PWA Install Prompt ==========
+        let deferredPrompt = null;
+
+        // Check if running as standalone (already installed)
+        const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+        // Listen for the beforeinstallprompt event (Chrome/Edge/Android)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Don't show banner if already installed or dismissed
+            if (!isStandalone && !localStorage.getItem('install-dismissed')) {
+                setTimeout(() => {
+                    document.getElementById('install-banner').style.display = 'block';
+                }, 2000);
+            }
+        });
+
+        // Listen for successful install
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            document.getElementById('install-banner').style.display = 'none';
+            showToast('✅ 已安裝到主畫面！');
+        });
+
+        function dismissInstall() {
+            document.getElementById('install-banner').style.display = 'none';
+            localStorage.setItem('install-dismissed', '1');
+        }
+
+        async function installApp() {
+            if (!deferredPrompt) {
+                // No prompt available (likely iOS Safari) - show manual instructions
+                dismissInstall();
+                document.getElementById('install-modal').classList.add('show');
+                return;
+            }
+            // Show the native install prompt
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('Install outcome:', outcome);
+            deferredPrompt = null;
+            document.getElementById('install-banner').style.display = 'none';
+        }
+
+        function closeInstallModal() {
+            document.getElementById('install-modal').classList.remove('show');
+        }
+
+        // Update install banner buttons
+        document.querySelector('#install-banner button[onclick="showInstallHint()"]')
+            && document.querySelector('#install-banner button[onclick="showInstallHint()"]')
+            .setAttribute('onclick', 'installApp()');
+    </script>
+</body>
+</html>

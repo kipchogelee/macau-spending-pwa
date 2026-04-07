@@ -521,13 +521,10 @@
         <div class="page" id="page-draw">
             <div class="card">
                 <h2>📝 記錄抽獎結果</h2>
-                <div id="draw-day-notice" style="display:none; background:#fff3cd; border:2px solid #ffc107; border-radius:12px; padding:12px; margin-bottom:16px; text-align:center; color:#856404; font-size:0.9em;">
-                    <strong>⚠️ 今日唔係抽獎日！</strong><br>
-                    <span id="draw-day-next">下次抽獎日：</span>
-                </div>
+                <div id="draw-day-notice" style="display:none;"></div>
                 <p style="font-size: 0.85em; color: #888; margin-bottom: 16px;" id="draw-info-text">
                     消費滿 50 MOP 後去官方平台抽獎，然後喺度記錄結果<br>
-                    每週每種支付工具上限 3 次｜<strong>只限星期五、六、日</strong><br>
+                    每週每種支付工具上限 3 次<br>
                     券額：10 / 20 / 50 / 100 / 200 MOP（可能唔中獎）
                 </p>
                 <div class="form-group">
@@ -595,10 +592,10 @@
                     <h3>📅 活動時間</h3>
                     <p><strong>2026年4月10日（五）至 6月18日（四）</strong>，共10週</p>
                     <ul>
-                        <li>🏆 抽獎期：每週五、六、日</li>
+                        <li>🏆 抽獎期：每週五、六、日（消費滿 50 MOP 即可抽）</li>
                         <li>✅ 核銷期：緊接嘅週一至週四</li>
                         <li>🔄 每週五凌晨：抽獎機會清零</li>
-                        <li>🔄 每週五凌晨：未用券過期</li>
+                        <li>🔄 每週四：未用券過期</li>
                     </ul>
                 </div>
                 <div class="info-section">
@@ -1019,24 +1016,7 @@
         }
 
         // ========== DRAW ==========
-        function isDrawDay() {
-            const day = new Date().getDay(); // 0=Sun, 5=Fri, 6=Sat
-            return (day === 5 || day === 6 || day === 0); // Fri, Sat, Sun
-        }
 
-        function getNextDrawDay() {
-            const now = new Date();
-            const day = now.getDay();
-            let daysUntil = 0;
-            if (day >= 1 && day <= 4) daysUntil = 5 - day; // Mon-Thu → Fri
-            else if (day === 5) daysUntil = 0; // Fri
-            else if (day === 6) daysUntil = 1; // Sat
-            else daysUntil = 0; // Sun
-            const next = new Date(now.getTime() + daysUntil * 24 * 60 * 60 * 1000);
-            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-            if (daysUntil === 0) return '今日';
-            return `星期${weekdays[next.getDay()]}（${daysUntil}日後）`;
-        }
 
         function getWeekDrawsForWallet(wallet) {
             const now = new Date();
@@ -1054,18 +1034,9 @@
             renderDrawHistory();
             renderWeeklyHistory();
 
-            // 抽獎日檢查
+            // 隱藏抽獎日提示（已移除星期限制）
             const notice = document.getElementById('draw-day-notice');
-            if (!isDrawDay()) {
-                notice.style.display = 'block';
-                document.getElementById('draw-day-next').textContent = '下次抽獎日：' + getNextDrawDay();
-                document.getElementById('draw-btn').disabled = true;
-                document.getElementById('draw-btn').textContent = '⏸️ 今日唔係抽獎日';
-            } else {
-                notice.style.display = 'none';
-                // 重新檢查剩餘次數（可能已用完）
-                updateDrawsRemaining(wallet);
-            }
+            if (notice) notice.style.display = 'none';
         }
 
         function updateDrawsRemaining(wallet) {
@@ -1087,10 +1058,6 @@
         });
 
         function recordDraw() {
-            if (!isDrawDay()) {
-                showToast('⚠️ 今日唔係抽獎日！只限星期五、六、日抽獎');
-                return;
-            }
             const wallet = document.getElementById('draw-wallet').value;
             const weekDraws = getWeekDrawsForWallet(wallet);
             if (weekDraws.length >= MAX_DRAWS_PER_WEEK_PER_WALLET) {
@@ -1113,7 +1080,7 @@
             if (finalVal > 0) {
                 const currentWeek = getCurrentWeek();
                 const { start, end } = getWeekDates(currentWeek);
-                const expiryDate = new Date(end.getTime() + 4 * 24 * 60 * 60 * 1000); // Thursday
+                const expiryDate = new Date(end); // end 已係週四，即到期日
                 data.vouchers.push({
                     id: Date.now() + 1,
                     amount: finalVal,
@@ -1305,7 +1272,7 @@
                 const drawDt = new Date(newDate + 'T00:00:00+08:00');
                 const weekNum = getWeekNumber(drawDt);
                 const { start, end } = getWeekDates(weekNum);
-                const expiryDate = new Date(end.getTime() + 4 * 24 * 60 * 60 * 1000);
+                const expiryDate = new Date(end); // end 已係週四，即到期日
                 data.vouchers.push({
                     id: Date.now(),
                     amount: newResult,

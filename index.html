@@ -764,6 +764,10 @@
     <script>
         // ========== DATA ==========
         const STORAGE_KEY = 'macau-spending-2026';
+        // 活動日期（澳門時間 UTC+8）- 用字串避免時區問題
+        const ACTIVITY_START_DATE = '2026-04-10';
+        const ACTIVITY_END_DATE = '2026-06-18';
+        // 兼容舊代碼的 Date 對象
         const ACTIVITY_START = new Date('2026-04-10T00:00:00+08:00');
         const ACTIVITY_END = new Date('2026-06-18T23:59:59+08:00');
         const VALID_VOUCHER_AMOUNTS = [10, 20, 50, 100, 200];
@@ -784,19 +788,28 @@
         }
 
         // ========== WEEK CALCULATION ==========
+        // 將日期字串轉為 UTC 時間戳（避免時區問題）
+        function dateToTimestamp(dateStr) {
+            const [y, m, day] = dateStr.split('-').map(Number);
+            return Date.UTC(y, m - 1, day);
+        }
+
         function getWeekNumber(date) {
-            const start = new Date(ACTIVITY_START);
-            const diff = date.getTime() - start.getTime();
+            const startTs = dateToTimestamp(ACTIVITY_START_DATE);
+            // 用 UTC 時間計算，避免時區影響
+            const dateTs = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+            const diff = dateTs - startTs;
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             if (days < 0) return 0;
             return Math.floor(days / 7) + 1;
         }
 
         function getWeekDates(weekNum) {
-            const start = new Date(ACTIVITY_START);
-            const wStart = new Date(start.getTime() + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000);
-            const wEnd = new Date(wStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-            return { start: wStart, end: wEnd };
+            const startTs = dateToTimestamp(ACTIVITY_START_DATE);
+            // 用 UTC 計算週開始/結束
+            const wStartTs = startTs + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000;
+            const wEndTs = wStartTs + 6 * 24 * 60 * 60 * 1000 + (23 * 60 * 60 * 1000) + (59 * 60 * 1000) + (59 * 1000) + 999;
+            return { start: new Date(wStartTs), end: new Date(wEndTs) };
         }
 
         function formatDate(d) {
@@ -895,8 +908,9 @@
             const weekVoucherValue = weekVouchers.reduce((sum, v) => sum + v.amount, 0);
 
             const weekDraws = data.draws.filter(d => {
-                const dt = new Date(d.date);
-                return dt >= start && dt <= end;
+                // 用 UTC 時間戳比較，避免時區問題
+                const dtTs = dateToTimestamp(d.date);
+                return dtTs >= start.getTime() && dtTs <= end.getTime();
             });
 
             const usedVouchers = weekVouchers.filter(v => v.used);
@@ -1023,8 +1037,9 @@
             const currentWeek = getCurrentWeek();
             const { start, end } = getWeekDates(currentWeek);
             return data.draws.filter(d => {
-                const dt = new Date(d.date);
-                return dt >= start && dt <= end && d.wallet === wallet;
+                // 用 UTC 時間戳比較，避免時區問題
+                const dtTs = dateToTimestamp(d.date);
+                return dtTs >= start.getTime() && dtTs <= end.getTime() && d.wallet === wallet;
             });
         }
 
@@ -1068,11 +1083,16 @@
             const resultSelect = document.getElementById('draw-result-select');
             const finalVal = parseInt(resultSelect.value);
 
+            // 獲取澳門時間（UTC+8）嘅日期
+            const now = new Date();
+            const macauDate = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            const dateStr = macauDate.toISOString().split('T')[0];
+
             // Record draw
             data.draws.push({
                 id: Date.now(),
                 wallet: wallet,
-                date: new Date().toISOString().split('T')[0],
+                date: dateStr,
                 result: finalVal
             });
 
@@ -1108,8 +1128,9 @@
             const currentWeek = getCurrentWeek();
             const { start, end } = getWeekDates(currentWeek);
             const weekDraws = data.draws.filter(d => {
-                const dt = new Date(d.date);
-                return dt >= start && dt <= end;
+                // 用 UTC 時間戳比較，避免時區問題
+                const dtTs = dateToTimestamp(d.date);
+                return dtTs >= start.getTime() && dtTs <= end.getTime();
             });
 
             if (weekDraws.length === 0) {
@@ -1151,8 +1172,9 @@
             for (let i = currentWeek; i >= 1; i--) {
                 const { start, end } = getWeekDates(i);
                 const weekDraws = data.draws.filter(d => {
-                    const dt = new Date(d.date);
-                    return dt >= start && dt <= end;
+                    // 用 UTC 時間戳比較，避免時區問題
+                    const dtTs = dateToTimestamp(d.date);
+                    return dtTs >= start.getTime() && dtTs <= end.getTime();
                 });
 
                 if (weekDraws.length === 0) continue;

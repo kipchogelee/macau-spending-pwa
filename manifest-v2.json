@@ -1,0 +1,42 @@
+{
+  "name": "澳門消費大獎賞 2026 Pro",
+  "short_name": "消費獎賞 Pro",
+  "description": "澳門社區消費大獎賞 2026 - 優化版（快速操作、智能提醒、合併用券）",
+  "start_url": "./index-v2.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#667eea",
+  "theme_color": "#764ba2",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["finance", "lifestyle"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

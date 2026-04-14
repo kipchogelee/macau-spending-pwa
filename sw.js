@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const CACHE_NAME = `macau-spending-rewards-${CACHE_VERSION}`;
 
 // 自動偵測 SW 所在嘅基礎路徑（支援 localhost 同 GitHub Pages 子路徑）

@@ -1380,9 +1380,10 @@
 
             // Add voucher if won
             if (finalVal > 0) {
-                const currentWeek = getCurrentWeek();
-                const { start, end } = getWeekDates(currentWeek);
-                const expiryDate = new Date(end); // end 已係週四，即到期日
+                const drawDt = new Date(dateStr + 'T00:00:00+08:00');
+                const weekNum = getWeekNumber(drawDt);
+                const { end } = getWeekDates(weekNum);
+                const expiryDate = new Date(end);
                 data.vouchers.push({
                     id: Date.now() + 1,
                     amount: finalVal,

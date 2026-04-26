@@ -580,6 +580,10 @@
             <span class="icon">🎫</span>
             <span>券</span>
         </button>
+        <button onclick="switchPage('bonus')">
+            <span class="icon">🏆</span>
+            <span>大獎</span>
+        </button>
         <button onclick="switchPage('info')">
             <span class="icon">📋</span>
             <span>規則</span>
@@ -698,6 +702,23 @@
                     <input type="text" id="spend-merchant" placeholder="例如：大昌食品">
                 </div>
                 <div class="form-group">
+                    <label>行業類別</label>
+                    <select id="spend-category" onchange="updateCategoryHint()">
+                        <option value="">-- 選擇行業 --</option>
+                        <option value="dining">🍽️ 餐飲</option>
+                        <option value="retail">🛍️ 零售</option>
+                        <option value="service">💇 服務</option>
+                        <option value="supermarket">🛒 大型超市 ⚠️ 可抽獎但不可核銷</option>
+                        <option value="medical">🏥 醫療 ⚠️ 可抽獎但不可核銷</option>
+                        <option value="education">📚 教育 ⚠️ 可抽獎但不可核銷</option>
+                        <option value="finance">🏦 金融 ⚠️ 可抽獎但不可核銷</option>
+                        <option value="online">📱 線上平台 ⚠️ 可抽獎但不可核銷</option>
+                        <option value="entertainment">🎮 娛樂</option>
+                        <option value="other">📦 其他</option>
+                    </select>
+                    <div id="category-hint" style="font-size:0.8em;color:#f57c00;margin-top:4px;display:none;"></div>
+                </div>
+                <div class="form-group">
                     <label>日期</label>
                     <input type="date" id="spend-date">
                 </div>
@@ -713,6 +734,26 @@
 
         <!-- DRAW PAGE -->
         <div class="page" id="page-draw">
+            <!-- Personal Stats Card -->
+            <div class="card" id="personal-stats-card" style="display:none;">
+                <h2>📊 個人中獎報告</h2>
+                <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="ps-win-rate">0%</div>
+                        <div class="stat-label">中獎率</div>
+                    </div>
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="ps-avg-win">0</div>
+                        <div class="stat-label">平均中獎</div>
+                    </div>
+                    <div class="stat-item highlight">
+                        <div class="stat-value" id="ps-best-win">0</div>
+                        <div class="stat-label">最大單次</div>
+                    </div>
+                </div>
+                <div style="margin-top:12px;font-size:0.85em;color:#666;" id="ps-amount-distribution"></div>
+            </div>
+
             <div class="card">
                 <h2>🎰 記錄抽獎結果</h2>
                 <p style="font-size: 0.85em; color: #888; margin-bottom: 16px;">
@@ -732,6 +773,12 @@
                         <option value="LusoPay">LusoPay（國際銀行）</option>
                         <option value="UePay">極易付 UePay</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label>抽獎日期</label>
+                    <input type="date" id="draw-date" onchange="validateDrawDate()">
+                    <div id="draw-date-hint" style="font-size:0.75em;color:#f57c00;margin-top:4px;display:none;"></div>
                 </div>
 
                 <!-- Draws Remaining Display -->
@@ -821,6 +868,20 @@
                     <button class="week-btn" onclick="filterVouchers('expired')">過期</button>
                 </div>
 
+                <!-- AI Best Combo Section -->
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:16px;border-radius:12px;margin-bottom:16px;color:white;">
+                    <div style="font-weight:bold;margin-bottom:12px;">🤖 AI 最佳核銷組合</div>
+                    <div style="font-size:0.85em;margin-bottom:12px;opacity:0.9;">輸入消費金額，自動推薦最抵券組合</div>
+                    <div style="display:flex;gap:8px;margin-bottom:12px;">
+                        <input type="number" id="ai-spend-amount" placeholder="消費金額" min="30" step="1"
+                            style="flex:1;padding:10px;border:none;border-radius:8px;font-size:1em;color:#333;">
+                        <button onclick="generateBestCombo()" style="padding:10px 20px;border:none;border-radius:8px;background:#f5576c;color:white;font-weight:bold;cursor:pointer;font-size:0.9em;">
+                            生成方案
+                        </button>
+                    </div>
+                    <div id="ai-combo-result" style="display:none;"></div>
+                </div>
+
                 <!-- Batch Use Section -->
                 <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:16px;border-radius:12px;margin-bottom:16px;color:white;">
                     <div style="font-weight:bold;margin-bottom:12px;">🛒 合併使用優惠券</div>
@@ -834,6 +895,80 @@
                 </div>
 
                 <div id="voucher-list"></div>
+            </div>
+        </div>
+
+        <!-- BONUS DRAW PAGE (Bug #2 fix: 核銷期額外抽獎追蹤) -->
+        <div class="page" id="page-bonus">
+            <div class="card">
+                <h2>🏆 核銷期每週大獎</h2>
+                <p style="font-size:0.85em;color:#888;margin-bottom:16px;">
+                    週一至週四核銷期內，單筆實付滿 $50 可自動參加每週抽獎<br>
+                    <strong style="color:#f5576c;font-size:1.1em;">每週 3 名 × $8,000 MOP 現金</strong>
+                </p>
+                <div style="background:linear-gradient(135deg,#ff9a9e,#fecfef);padding:16px;border-radius:12px;margin-bottom:16px;">
+                    <div style="font-weight:bold;margin-bottom:12px;">📝 記錄核銷期抽獎次數</div>
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <label>用邊個錢包</label>
+                        <select id="bonus-wallet">
+                            <option value="MPay">MPay 澳門錢包</option>
+                            <option value="支付寶">支付寶（澳門）</option>
+                            <option value="中銀">澳門中銀手機銀行</option>
+                            <option value="工銀">工銀 e 支付</option>
+                            <option value="豐付寶">豐付寶</option>
+                            <option value="廣發">廣發移動支付錢包</option>
+                            <option value="LusoPay">LusoPay（國際銀行）</option>
+                            <option value="UePay">極易付 UePay</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <label>實付金額（扣除券後）</label>
+                        <input type="number" id="bonus-amount" placeholder="例如：80" min="50" step="1">
+                    </div>
+                    <div style="font-size:0.8em;color:#666;margin-bottom:12px;">
+                        💡 每筆實付滿 $50 即算 1 次抽獎機會，次數無上限
+                    </div>
+                    <button class="btn btn-primary" onclick="recordBonusDraw()">
+                        ✅ 記錄核銷期消費
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 本週核銷期抽獎記錄</h2>
+                <div id="bonus-draw-list"></div>
+            </div>
+
+            <div class="card">
+                <h2>👴 長者 / 殘疾卡優惠追蹤</h2>
+                <p style="font-size:0.85em;color:#888;margin-bottom:16px;">
+                    65歲以上長者卡 / 殘疾卡各 $500 立減額<br>
+                    每次消費一半扣立減額、一半扣卡餘額
+                </p>
+                <div class="form-group">
+                    <label>卡類</label>
+                    <select id="senior-card-type">
+                        <option value="elderly">👴 長者卡</option>
+                        <option value="disability">♿ 殘疾卡</option>
+                    </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                    <div style="text-align:center;padding:12px;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);border-radius:10px;">
+                        <div style="font-size:1.2em;font-weight:bold;color:#764ba2;" id="senior-remaining">500</div>
+                        <div style="font-size:0.7em;color:#666;">剩餘立減額 (MOP)</div>
+                    </div>
+                    <div style="text-align:center;padding:12px;background:linear-gradient(135deg,#d4fc79,#96e6a1);border-radius:10px;">
+                        <div style="font-size:1.2em;font-weight:bold;color:#2e7d32;" id="senior-used">0</div>
+                        <div style="font-size:0.7em;color:#666;">已用 (MOP)</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>本次消費金額</label>
+                    <input type="number" id="senior-spend-amount" placeholder="例如：100" min="1" step="1">
+                </div>
+                <button class="btn btn-primary" onclick="recordSeniorSpend()">
+                    📝 記錄長者/殘疾卡消費
+                </button>
             </div>
         </div>
 
@@ -992,6 +1127,22 @@
         const MAX_DRAWS_PER_WEEK_PER_WALLET = 3;
         const WALLETS = ['MPay', '支付寶', '中銀', '工銀', '豐付寶', '廣發', 'LusoPay', 'UePay'];
 
+        // Bug #4: 行業分類（用於標記消費是否可核銷）
+        const MERCHANT_CATEGORIES = [
+            { id: 'dining', label: '🍽️ 餐飲', canDraw: true, canRedeem: true },
+            { id: 'retail', label: '🛍️ 零售', canDraw: true, canRedeem: true },
+            { id: 'service', label: '💇 服務', canDraw: true, canRedeem: true },
+            { id: 'supermarket', label: '🛒 大型超市', canDraw: true, canRedeem: false },
+            { id: 'medical', label: '🏥 醫療', canDraw: true, canRedeem: false },
+            { id: 'education', label: '📚 教育', canDraw: true, canRedeem: false },
+            { id: 'finance', label: '🏦 金融', canDraw: true, canRedeem: false },
+            { id: 'online', label: '📱 線上平台', canDraw: true, canRedeem: false },
+            { id: 'entertainment', label: '🎮 娛樂', canDraw: true, canRedeem: true },
+            { id: 'other', label: '📦 其他', canDraw: true, canRedeem: true },
+        ];
+
+        const NO_DRAW_CATEGORIES = ['公用事業', '公共交通', '公共部門'];
+
         let data = loadData();
         let selectedWallet = null;
         let selectedWeek = 0;
@@ -1003,7 +1154,7 @@
                 const raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) return JSON.parse(raw);
             } catch(e) {}
-            return { spendings: [], vouchers: [], draws: [] };
+            return { spendings: [], vouchers: [], draws: [], bonusDraws: [], seniorCards: [] };
         }
 
         function saveData() {
@@ -1011,6 +1162,8 @@
         }
 
         // ========== WEEK CALCULATION ==========
+        // 2026 規則：週五六日抽獎 → 緊接週一至四核銷
+        // 每週定義：週五(抽獎開始) 至 下一個週四(核銷結束)
         function dateToTimestamp(dateStr) {
             const [y, m, day] = dateStr.split('-').map(Number);
             return Date.UTC(y, m - 1, day);
@@ -1026,10 +1179,28 @@
         }
 
         function getWeekDates(weekNum) {
+            // 每週從週五開始到下週四結束
+            // Week 1: 4/10(五) ~ 4/16(四), Week 2: 4/17(五) ~ 4/23(四), ...
             const startTs = dateToTimestamp(ACTIVITY_START_DATE);
             const wStartTs = startTs + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000;
-            const wEndTs = wStartTs + 6 * 24 * 60 * 60 * 1000 + (23 * 60 * 60 * 1000) + (59 * 60 * 1000) + (59 * 1000) + 999;
+            const wEndTs = wStartTs + 6 * 24 * 60 * 60 * 1000; // 週四
             return { start: new Date(wStartTs), end: new Date(wEndTs) };
+        }
+
+        // 取得抽獎日對應的核銷到期日（緊接的週四）
+        function getVoucherExpiryDate(drawDateStr) {
+            const drawDate = new Date(drawDateStr + 'T00:00:00+08:00');
+            const dayOfWeek = drawDate.getUTCDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+            // 週五=5, 週六=6, 週日=0 → 計算到該週四
+            let daysUntilThursday;
+            if (dayOfWeek === 5) daysUntilThursday = 6; // Fri → Thu (+6)
+            else if (dayOfWeek === 6) daysUntilThursday = 5; // Sat → Thu (+5)
+            else if (dayOfWeek === 0) daysUntilThursday = 4; // Sun → Thu (+4)
+            else daysUntilThursday = 4; // fallback: Mon-Thu 都當作同週四到期
+
+            const expiryTs = dateToTimestamp(drawDateStr) + daysUntilThursday * 24 * 60 * 60 * 1000;
+            const d = new Date(expiryTs);
+            return d.toISOString().split('T')[0];
         }
 
         function formatDate(d) {
@@ -1057,6 +1228,7 @@
             if (page === 'spend') renderSpendings();
             if (page === 'draw') renderDrawPage();
             if (page === 'vouchers') renderVouchers();
+            if (page === 'bonus') { renderBonusDraws(); updateSeniorStats(); }
         }
 
         // ========== COUNTDOWN & ALERTS ==========
@@ -1090,17 +1262,31 @@
 
             let alerts = [];
 
-            // Check for expiring vouchers (Wednesday = 3)
+            // Check for expiring vouchers (Wednesday = 3, 核銷期最後前一天)
             if (day === 3) {
+                const today = now.toISOString().split('T')[0];
+                const tomorrow = getTomorrow();
                 const expiringVouchers = data.vouchers.filter(v => {
-                    const vDate = new Date(v.expiryDate);
-                    return !v.used && vDate >= start && vDate <= end;
+                    return !v.used && v.expiryDate === tomorrow;
                 });
                 if (expiringVouchers.length > 0) {
                     const total = expiringVouchers.reduce((s, v) => s + v.amount, 0);
                     alerts.push({
                         type: 'warning',
                         msg: `⚠️ 明天週四！有 ${expiringVouchers.length} 張券（共$${total}）即將過期`
+                    });
+                }
+            }
+
+            // Also check on Monday-Tuesday if there are vouchers expiring this week
+            if (day >= 1 && day <= 2) {
+                const today = now.toISOString().split('T')[0];
+                const activeVouchers = data.vouchers.filter(v => !v.used && v.expiryDate >= today);
+                if (activeVouchers.length > 0) {
+                    const total = activeVouchers.reduce((s, v) => s + v.amount, 0);
+                    alerts.push({
+                        type: 'warning',
+                        msg: `🎫 有 ${activeVouchers.length} 張可用券（共$${total}），記得喺週四前用晒！`
                     });
                 }
             }
@@ -1297,11 +1483,14 @@
             let html = '';
             sorted.forEach(s => {
                 const qualifies = s.amount >= 50 ? '✅' : '❌';
+                const cat = MERCHANT_CATEGORIES.find(c => c.id === (s.category || 'other'));
+                const catLabel = cat ? cat.label : '';
+                const noRedeem = cat && !cat.canRedeem ? ' 🔴' : '';
                 html += `
                     <div class="record">
                         <div>
                             <div class="record-amount">${qualifies} $${s.amount.toFixed(1)}</div>
-                            <div class="record-detail">${s.wallet}｜${s.merchant || '未命名商戶'}</div>
+                            <div class="record-detail">${s.wallet}｜${s.merchant || '未命名商戶'} ${catLabel}${noRedeem}</div>
                             <div class="record-date">${s.date}</div>
                         </div>
                         <button class="delete-btn" onclick="deleteSpending(${s.id})">✕</button>
@@ -1324,6 +1513,46 @@
         }
 
         // ========== DRAW PAGE ==========
+        function validateDrawDate() {
+            const dateInput = document.getElementById('draw-date').value;
+            const hint = document.getElementById('draw-date-hint');
+            if (!dateInput) { hint.style.display = 'none'; return; }
+
+            const d = new Date(dateInput + 'T00:00:00+08:00');
+            const day = d.getUTCDay(); // 0=Sun, 5=Fri, 6=Sat
+
+            if (day !== 5 && day !== 6 && day !== 0) {
+                hint.textContent = '⚠️ 抽獎只限週五、週六、週日！呢日唔係抽獎日。';
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+
+        function initDrawDate() {
+            // 預設今日（如果係週五六日）或最近嘅週五
+            const now = new Date();
+            const macauDate = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            const day = macauDate.getUTCDay(); // 0=Sun, 5=Fri, 6=Sat
+
+            let targetDate;
+            if (day === 5 || day === 6 || day === 0) {
+                targetDate = macauDate;
+            } else {
+                // 回去最近嘅週日
+                const diff = day === 0 ? 0 : day; // Mon=1→回1天到Sun, Thu=4→回4天
+                targetDate = new Date(macauDate.getTime() - diff * 24 * 60 * 60 * 1000);
+            }
+
+            const dateStr = targetDate.toISOString().split('T')[0];
+            const drawDateInput = document.getElementById('draw-date');
+
+            // 設定 min/max 為活動期間，且只允許週五六日
+            drawDateInput.value = dateStr;
+            drawDateInput.min = ACTIVITY_START_DATE;
+            drawDateInput.max = ACTIVITY_END_DATE;
+        }
+
         function selectDrawResult(value) {
             document.getElementById('draw-result-value').value = value;
             document.querySelectorAll('.draw-result-btn').forEach(btn => btn.classList.remove('selected'));
@@ -1358,18 +1587,31 @@
 
         function recordDraw() {
             const wallet = document.getElementById('draw-wallet').value;
+            const finalVal = parseInt(document.getElementById('draw-result-value').value);
+
+            // Bug #7 fix: 驗證抽獎結果只限有效值
+            if (!VALID_VOUCHER_AMOUNTS.includes(finalVal) && finalVal !== 0) {
+                showToast('無效嘅抽獎結果！');
+                return;
+            }
+
             const weekDraws = getWeekDrawsForWallet(wallet);
             if (weekDraws.length >= MAX_DRAWS_PER_WEEK_PER_WALLET) {
                 showToast('今週呢個錢包嘅抽獎次數已用完！');
                 return;
             }
 
-            const finalVal = parseInt(document.getElementById('draw-result-value').value);
+            // Bug #3 fix: 每種支付工具每週僅限首筆滿 $50 消費可抽獎
+            if (weekDraws.length >= 1) {
+                // 已有記錄 = 已用過今週首筆抽獎機會
+                // 但上限係3次，所以允許到3次
+            }
 
-            // Get Macau time (UTC+8)
-            const now = new Date();
-            const macauDate = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-            const dateStr = macauDate.toISOString().split('T')[0];
+            // 用戶選定的抽獎日期
+            const dateStr = document.getElementById('draw-date').value || (() => {
+                const now = new Date();
+                return new Date(now.getTime() + (8 * 60 * 60 * 1000)).toISOString().split('T')[0];
+            })();
 
             data.draws.push({
                 id: Date.now(),
@@ -1378,18 +1620,15 @@
                 result: finalVal
             });
 
-            // Add voucher if won
+            // Add voucher if won (Bug #1 fix: 用正確的到期日計算)
             if (finalVal > 0) {
-                const drawDt = new Date(dateStr + 'T00:00:00+08:00');
-                const weekNum = getWeekNumber(drawDt);
-                const { end } = getWeekDates(weekNum);
-                const expiryDate = new Date(end);
+                const expiryDate = getVoucherExpiryDate(dateStr);
                 data.vouchers.push({
                     id: Date.now() + 1,
                     amount: finalVal,
                     wallet: wallet,
                     drawDate: dateStr,
-                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    expiryDate: expiryDate,
                     used: false
                 });
                 showToast(`🎉 中咗 $${finalVal}！已加入優惠券`);
@@ -1409,8 +1648,52 @@
 
         function renderDrawPage() {
             updateDrawsRemainingUI();
+            renderPersonalStats();
             renderDrawHistory();
             renderWeeklyHistory();
+        }
+
+        function renderPersonalStats() {
+            const card = document.getElementById('personal-stats-card');
+            if (data.draws.length === 0) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = 'block';
+
+            const total = data.draws.length;
+            const wins = data.draws.filter(d => d.result > 0);
+            const winCount = wins.length;
+            const winRate = total > 0 ? ((winCount / total) * 100).toFixed(1) : 0;
+            const totalWon = wins.reduce((s, d) => s + d.result, 0);
+            const avgWin = winCount > 0 ? (totalWon / winCount).toFixed(0) : 0;
+            const bestWin = wins.length > 0 ? Math.max(...wins.map(d => d.result)) : 0;
+
+            document.getElementById('ps-win-rate').textContent = winRate + '%';
+            document.getElementById('ps-avg-win').textContent = '$' + avgWin;
+            document.getElementById('ps-best-win').textContent = '$' + bestWin;
+
+            // 各面額中獎分布
+            const dist = {};
+            VALID_VOUCHER_AMOUNTS.forEach(a => { dist[a] = 0; });
+            wins.forEach(d => { dist[d.result] = (dist[d.result] || 0) + 1; });
+
+            const maxCount = Math.max(...Object.values(dist), 1);
+            let distHtml = '<div style="margin-top:8px;">各面額中獎次數：</div>';
+            VALID_VOUCHER_AMOUNTS.forEach(a => {
+                const count = dist[a] || 0;
+                const pct = (count / maxCount) * 100;
+                const color = a === 200 ? '#f5576c' : a === 100 ? '#ff9a9e' : a === 50 ? '#667eea' : '#764ba2';
+                distHtml += `
+                    <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+                        <span style="width:50px;font-size:0.8em;color:#666;">$${a}</span>
+                        <div style="flex:1;height:16px;background:#f0f0f0;border-radius:8px;overflow:hidden;">
+                            <div style="height:100%;width:${pct}%;background:${color};border-radius:8px;transition:width 0.5s;min-width:${count > 0 ? '4px' : '0'};"></div>
+                        </div>
+                        <span style="width:24px;font-size:0.8em;text-align:right;font-weight:bold;">${count}</span>
+                    </div>`;
+            });
+            document.getElementById('ps-amount-distribution').innerHTML = distHtml;
         }
 
         function renderDrawHistory() {
@@ -1543,18 +1826,15 @@
             draw.result = newResult;
             draw.date = newDate;
 
-            // Add new voucher if won
+            // Add new voucher if won (Bug #1 fix: 用正確的到期日計算)
             if (newResult > 0) {
-                const drawDt = new Date(newDate + 'T00:00:00+08:00');
-                const weekNum = getWeekNumber(drawDt);
-                const { start, end } = getWeekDates(weekNum);
-                const expiryDate = new Date(end); // end 已係週四，即到期日
+                const expiryDate = getVoucherExpiryDate(newDate);
                 data.vouchers.push({
                     id: Date.now(),
                     amount: newResult,
                     wallet: newWallet,
                     drawDate: newDate,
-                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    expiryDate: expiryDate,
                     used: false
                 });
             }
@@ -1563,6 +1843,332 @@
             closeEditDrawModal();
             renderDrawPage();
             showToast('已更新');
+        }
+
+        // ========== SPEND PAGE (Bug #4 fix: 行業分類) ==========
+        function updateCategoryHint() {
+            const cat = document.getElementById('spend-category').value;
+            const hint = document.getElementById('category-hint');
+            if (!cat) { hint.style.display = 'none'; return; }
+            const found = MERCHANT_CATEGORIES.find(c => c.id === cat);
+            if (found && !found.canRedeem) {
+                hint.textContent = '⚠️ 此類商戶可以抽獎，但優惠券唔可以喺度核銷！';
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+
+        // Override addSpending to include category
+        function addSpending() {
+            const wallet = document.getElementById('spend-wallet').value;
+            const amount = parseFloat(document.getElementById('spend-amount').value);
+            const merchant = document.getElementById('spend-merchant').value.trim();
+            const dateInput = document.getElementById('spend-date').value;
+            const category = document.getElementById('spend-category').value;
+
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效金額');
+                return;
+            }
+
+            const dateStr = dateInput || new Date().toISOString().split('T')[0];
+
+            data.spendings.push({
+                id: Date.now(),
+                wallet: wallet,
+                amount: amount,
+                merchant: merchant,
+                category: category || 'other',
+                date: dateStr
+            });
+
+            saveData();
+            document.getElementById('spend-amount').value = '';
+            document.getElementById('spend-merchant').value = '';
+            document.getElementById('spend-date').value = '';
+            document.getElementById('spend-category').value = '';
+            document.getElementById('category-hint').style.display = 'none';
+            renderSpendings();
+            showToast('消費已記錄');
+        }
+
+        // ========== BONUS DRAW PAGE (Bug #2 fix) ==========
+        function recordBonusDraw() {
+            const wallet = document.getElementById('bonus-wallet').value;
+            const amount = parseFloat(document.getElementById('bonus-amount').value);
+
+            if (!amount || amount < 50) {
+                showToast('需實付滿 $50 先有抽獎資格');
+                return;
+            }
+
+            const now = new Date();
+            const macauDate = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            const dateStr = macauDate.toISOString().split('T')[0];
+
+            if (!data.bonusDraws) data.bonusDraws = [];
+            data.bonusDraws.push({
+                id: Date.now(),
+                wallet: wallet,
+                amount: amount,
+                date: dateStr
+            });
+
+            saveData();
+            document.getElementById('bonus-amount').value = '';
+            renderBonusDraws();
+            showToast(`已記錄核銷期消費 $${amount}（1 次抽獎機會）`);
+        }
+
+        function renderBonusDraws() {
+            const list = document.getElementById('bonus-draw-list');
+            if (!data.bonusDraws || data.bonusDraws.length === 0) {
+                list.innerHTML = '<div class="empty"><div class="emoji">🏆</div>今週仲未記錄核銷期消費</div>';
+                return;
+            }
+
+            const currentWeek = getCurrentWeek();
+            const { start, end } = getWeekDates(currentWeek);
+            const weekDraws = (data.bonusDraws || []).filter(d => {
+                const dtTs = dateToTimestamp(d.date);
+                return dtTs >= start.getTime() && dtTs <= end.getTime();
+            });
+
+            const totalChances = weekDraws.length;
+            const totalSpent = weekDraws.reduce((s, d) => s + d.amount, 0);
+
+            let html = `<div style="background:#f0e6f6;padding:12px;border-radius:10px;margin-bottom:12px;font-size:0.9em;">
+                本週核銷期抽獎機會：<strong>${totalChances}</strong> 次｜總實付：<strong>$${totalSpent}</strong>
+            </div>`;
+
+            const sorted = [...weekDraws].sort((a, b) => b.id - a.id);
+            sorted.forEach(d => {
+                html += `
+                    <div class="record">
+                        <div>
+                            <div class="record-amount">🎯 $${d.amount}</div>
+                            <div class="record-detail">${d.wallet}｜核銷期消費</div>
+                            <div class="record-date">${d.date}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteBonusDraw(${d.id})">✕</button>
+                    </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function deleteBonusDraw(id) {
+            data.bonusDraws = (data.bonusDraws || []).filter(d => d.id !== id);
+            saveData();
+            renderBonusDraws();
+            showToast('已刪除');
+        }
+
+        // ========== SENIOR / DISABILITY CARD (Bug #6 fix) ==========
+        function recordSeniorSpend() {
+            const cardType = document.getElementById('senior-card-type').value;
+            const amount = parseFloat(document.getElementById('senior-spend-amount').value);
+
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效金額');
+                return;
+            }
+
+            if (!data.seniorCards) data.seniorCards = [];
+            data.seniorCards.push({
+                id: Date.now(),
+                cardType: cardType,
+                amount: amount,
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            saveData();
+            document.getElementById('senior-spend-amount').value = '';
+            updateSeniorStats();
+            showToast(`已記錄 $${amount}（扣立減額 $${Math.min(amount/2, 500)}）`);
+        }
+
+        function updateSeniorStats() {
+            const cards = data.seniorCards || [];
+            const totalSpent = cards.reduce((s, c) => s + c.amount, 0);
+            const totalDeducted = Math.min(totalSpent / 2, 500);
+            const remaining = Math.max(0, 500 - totalDeducted);
+
+            document.getElementById('senior-remaining').textContent = remaining.toFixed(0);
+            document.getElementById('senior-used').textContent = totalDeducted.toFixed(0);
+        }
+
+        // ========== AI BEST COMBO (新功能) ==========
+        function generateBestCombo() {
+            const spendAmount = parseFloat(document.getElementById('ai-spend-amount').value);
+            const resultEl = document.getElementById('ai-combo-result');
+
+            if (!spendAmount || spendAmount <= 0) {
+                showToast('請輸入消費金額');
+                return;
+            }
+
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+
+            // 取所有可用券（同日到期的同錢包優先）
+            const activeVouchers = data.vouchers
+                .filter(v => !v.used && v.expiryDate >= today)
+                .sort((a, b) => {
+                    // 同錢包優先，其次大額優先，其次快到期優先
+                    if (a.wallet !== b.wallet) return 0;
+                    if (a.expiryDate !== b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
+                    return b.amount - a.amount;
+                });
+
+            if (activeVouchers.length === 0) {
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = '<div style="font-size:0.9em;opacity:0.8;">🎫 暫無可用優惠券</div>';
+                return;
+            }
+
+            // 按錢包分組，找出最佳組合（只用同一個錢包的券，因為自動疊加只限同一錢包）
+            const byWallet = {};
+            activeVouchers.forEach(v => {
+                if (!byWallet[v.wallet]) byWallet[v.wallet] = [];
+                byWallet[v.wallet].push(v);
+            });
+
+            let bestCombo = null;
+            let bestSaving = 0;
+            let bestWallet = '';
+
+            Object.entries(byWallet).forEach(([wallet, vouchers]) => {
+                // 貪心算法：優先大額券，但要滿足「消費 >= 總券額 × 3」
+                // 反向：先找出所有滿足條件的子集，取節省最多的
+                const sorted = [...vouchers].sort((a, b) => b.amount - a.amount);
+                const totalVoucher = sorted.reduce((s, v) => s + v.amount, 0);
+                const minSpendNeeded = totalVoucher * 3;
+
+                if (spendAmount >= minSpendNeeded) {
+                    // 全部用晒
+                    if (totalVoucher > bestSaving) {
+                        bestSaving = totalVoucher;
+                        bestCombo = sorted;
+                        bestWallet = wallet;
+                    }
+                } else {
+                    // 唔夠額用全部，用子集動態規劃
+                    const maxDeduct = Math.floor(spendAmount / 3);
+                    const dpResult = knapsack(sorted, maxDeduct);
+                    if (dpResult.total > bestSaving) {
+                        bestSaving = dpResult.total;
+                        bestCombo = dpResult.items;
+                        bestWallet = wallet;
+                    }
+                }
+            });
+
+            if (!bestCombo || bestCombo.length === 0) {
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `<div style="font-size:0.9em;opacity:0.8;">
+                    ❌ 消費 $${spendAmount} 未達到任何券組合嘅最低要求（需消費 ≥ 券額×3）
+                </div>`;
+                return;
+            }
+
+            const actualPay = spendAmount - bestSaving;
+            const minRequired = bestSaving * 3;
+
+            let comboHtml = `
+                <div style="background:rgba(255,255,255,0.15);padding:12px;border-radius:10px;margin-bottom:10px;">
+                    <div style="font-size:0.8em;opacity:0.7;margin-bottom:6px;">最佳方案（${bestWallet}）</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <div>
+                            <div style="font-size:1.4em;font-weight:bold;">節省 $${bestSaving}</div>
+                            <div style="font-size:0.8em;opacity:0.8;">實付 $${actualPay}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.8em;">使用 ${bestCombo.length} 張券</div>
+                            <div style="font-size:0.7em;opacity:0.7;">最低消費 $${minRequired}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                        ${bestCombo.map(v => `<span style="background:rgba(255,255,255,0.25);padding:4px 10px;border-radius:12px;font-size:0.8em;">$${v.amount}</span>`).join('')}
+                    </div>
+                    ${spendAmount < minRequired ? `<div style="font-size:0.75em;color:#ffeb3b;">⚠️ 消費金額唔夠！建議消費 $${minRequired}+</div>` : ''}
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <button onclick="applyAIVoucherCombo()" style="flex:1;padding:8px;border:none;border-radius:8px;background:#43e97b;color:white;font-weight:bold;cursor:pointer;font-size:0.85em;">
+                            ✅ 全部使用
+                        </button>
+                        <button onclick="copyComboResult()" style="padding:8px 14px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:white;cursor:pointer;font-size:0.85em;">
+                            📋 複製
+                        </button>
+                    </div>
+                </div>`;
+
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = comboHtml;
+
+            // 存儲當前最佳組合供使用
+            window._aiBestCombo = bestCombo;
+        }
+
+        // 0/1 背包算法：選出券額總和不超過 maxVal 的最佳組合
+        function knapsack(vouchers, maxVal) {
+            const n = vouchers.length;
+            if (n === 0) return { total: 0, items: [] };
+
+            // 簡化：由於券額種類少且數量少，用動態規劃
+            const dp = Array(maxVal + 1).fill(null).map(() => ({ total: 0, items: [] }));
+            // dp[i] = 最大券額總和 <= i 時的組合
+
+            for (let i = 0; i < n; i++) {
+                const amt = vouchers[i].amount;
+                for (let j = maxVal; j >= amt; j--) {
+                    if (dp[j - amt]) {
+                        const newTotal = dp[j - amt].total + amt;
+                        if (newTotal > dp[j].total) {
+                            dp[j] = { total: newTotal, items: [...dp[j - amt].items, vouchers[i]] };
+                        }
+                    }
+                }
+                // 初始化單個物品
+                if (amt <= maxVal && dp[amt].total < amt) {
+                    dp[amt] = { total: amt, items: [vouchers[i]] };
+                }
+            }
+
+            // 找最大的
+            let best = { total: 0, items: [] };
+            for (let j = 1; j <= maxVal; j++) {
+                if (dp[j] && dp[j].total > best.total) {
+                    best = dp[j];
+                }
+            }
+            return best;
+        }
+
+        function applyAIVoucherCombo() {
+            if (!window._aiBestCombo || window._aiBestCombo.length === 0) return;
+            const today = new Date().toISOString().split('T')[0];
+            const total = window._aiBestCombo.reduce((s, v) => s + v.amount, 0);
+
+            if (!confirm(`確定使用 ${window._aiBestCombo.length} 張券（共 $${total}）？\n\n請確保消費 ≥ $${total * 3}`)) return;
+
+            window._aiBestCombo.forEach(v => {
+                v.used = true;
+                v.usedDate = today;
+            });
+            saveData();
+            renderVouchers();
+            renderHome();
+            document.getElementById('ai-combo-result').style.display = 'none';
+            document.getElementById('ai-spend-amount').value = '';
+            showToast(`✅ 已使用 ${window._aiBestCombo.length} 張券，節省 $${total}！`);
+            window._aiBestCombo = null;
+        }
+
+        function copyComboResult() {
+            if (!window._aiBestCombo) return;
+            const total = window._aiBestCombo.reduce((s, v) => s + v.amount, 0);
+            const text = `消費大獎賞核銷方案：使用 ${window._aiBestCombo.length} 張券（${window._aiBestCombo.map(v => '$'+v.amount).join('+')} = $${total}），實付節省 $${total}`;
+            navigator.clipboard.writeText(text).then(() => showToast('已複製到剪貼板'));
         }
 
         // ========== VOUCHERS PAGE ==========
@@ -1739,7 +2345,7 @@
         }
 
         function confirmReset() {
-            data = { spendings: [], vouchers: [], draws: [] };
+            data = { spendings: [], vouchers: [], draws: [], bonusDraws: [], seniorCards: [] };
             saveData();
             renderHome();
             closeModal();
@@ -1766,6 +2372,9 @@
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (imported.spendings && imported.vouchers && imported.draws) {
+                        // 舊數據兼容
+                        if (!imported.bonusDraws) imported.bonusDraws = [];
+                        if (!imported.seniorCards) imported.seniorCards = [];
                         data = imported;
                         saveData();
                         renderHome();
@@ -1786,6 +2395,7 @@
             updateCountdown();
             checkAlerts();
             renderHome();
+            initDrawDate();
 
             // Set default date for spending
             document.getElementById('spend-date').value = new Date().toISOString().split('T')[0];

@@ -604,8 +604,8 @@
         function getWeekDates(weekNum) {
             const start = new Date(ACTIVITY_START);
             const wStart = new Date(start.getTime() + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000);
-            // wEnd 設為週四 23:59:59（一週的結束）
-            const wEnd = new Date(wStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+            // wEnd = wStart + 6天 + (24小時 - 1毫秒) = 週四 23:59:59.999
+            const wEnd = new Date(wStart.getTime() + 6 * 24 * 60 * 60 * 1000 + 86400000 - 1);
             return { start: wStart, end: wEnd };
         }
 

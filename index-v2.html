@@ -1038,6 +1038,21 @@
             return `${m}/${day}`;
         }
 
+        // 取得抽獎日對應的核銷到期日（緊接的週四）
+        function getVoucherExpiryDate(drawDateStr) {
+            const drawDate = new Date(drawDateStr + 'T00:00:00+08:00');
+            const dayOfWeek = drawDate.getUTCDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+            let daysUntilThursday;
+            if (dayOfWeek === 5) daysUntilThursday = 6; // Fri → Thu (+6)
+            else if (dayOfWeek === 6) daysUntilThursday = 5; // Sat → Thu (+5)
+            else if (dayOfWeek === 0) daysUntilThursday = 4; // Sun → Thu (+4)
+            else daysUntilThursday = 4; // fallback: Mon-Thu 都當作同週四到期
+
+            const expiryTs = dateToTimestamp(drawDateStr) + daysUntilThursday * 24 * 60 * 60 * 1000;
+            const d = new Date(expiryTs);
+            return d.toISOString().split('T')[0];
+        }
+
         function getCurrentWeek() {
             return getWeekNumber(new Date());
         }
@@ -1380,14 +1395,13 @@
 
             // Add voucher if won
             if (finalVal > 0) {
-                const expiryDate = new Date(macauDate);
-                expiryDate.setDate(expiryDate.getDate() + 4);
+                const expiryDate = getVoucherExpiryDate(dateStr);
                 data.vouchers.push({
                     id: Date.now() + 1,
                     amount: finalVal,
                     wallet: wallet,
                     drawDate: dateStr,
-                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    expiryDate: expiryDate,
                     used: false
                 });
                 showToast(`🎉 中咗 $${finalVal}！已加入優惠券`);
@@ -1543,14 +1557,13 @@
 
             // Add new voucher if won
             if (newResult > 0) {
-                const expiryDate = new Date(newDate);
-                expiryDate.setDate(expiryDate.getDate() + 4);
+                const expiryDate = getVoucherExpiryDate(newDate);
                 data.vouchers.push({
                     id: Date.now(),
                     amount: newResult,
                     wallet: newWallet,
                     drawDate: newDate,
-                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    expiryDate: expiryDate,
                     used: false
                 });
             }

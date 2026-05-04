@@ -1169,6 +1169,14 @@
             return Date.UTC(y, m - 1, day);
         }
 
+        // 獲取本地時間的日期字符串 (YYYY-MM-DD)，避免時區偏移
+        function getLocalDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
         function getWeekNumber(date) {
             const startTs = dateToTimestamp(ACTIVITY_START_DATE);
             const dateTs = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1183,14 +1191,14 @@
             // Week 1: 4/10(五) ~ 4/16(四), Week 2: 4/17(五) ~ 4/23(四), ...
             const startTs = dateToTimestamp(ACTIVITY_START_DATE);
             const wStartTs = startTs + (weekNum - 1) * 7 * 24 * 60 * 60 * 1000;
-            const wEndTs = wStartTs + 6 * 24 * 60 * 60 * 1000; // 週四
+            const wEndTs = wStartTs + 6 * 24 * 60 * 60 * 1000 + 86400000 - 1; // 週四 23:59:59
             return { start: new Date(wStartTs), end: new Date(wEndTs) };
         }
 
         // 取得抽獎日對應的核銷到期日（緊接的週四）
         function getVoucherExpiryDate(drawDateStr) {
             const drawDate = new Date(drawDateStr + 'T00:00:00+08:00');
-            const dayOfWeek = drawDate.getUTCDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+            const dayOfWeek = drawDate.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
             // 週五=5, 週六=6, 週日=0 → 計算到該週四
             let daysUntilThursday;
             if (dayOfWeek === 5) daysUntilThursday = 6; // Fri → Thu (+6)
@@ -1200,7 +1208,7 @@
 
             const expiryTs = dateToTimestamp(drawDateStr) + daysUntilThursday * 24 * 60 * 60 * 1000;
             const d = new Date(expiryTs);
-            return d.toISOString().split('T')[0];
+            return getLocalDateString(d);
         }
 
         function formatDate(d) {
@@ -1264,7 +1272,7 @@
 
             // Check for expiring vouchers (Wednesday = 3, 核銷期最後前一天)
             if (day === 3) {
-                const today = now.toISOString().split('T')[0];
+                const today = getLocalDateString(now);
                 const tomorrow = getTomorrow();
                 const expiringVouchers = data.vouchers.filter(v => {
                     return !v.used && v.expiryDate === tomorrow;
@@ -1280,7 +1288,7 @@
 
             // Also check on Monday-Tuesday if there are vouchers expiring this week
             if (day >= 1 && day <= 2) {
-                const today = now.toISOString().split('T')[0];
+                const today = getLocalDateString(now);
                 const activeVouchers = data.vouchers.filter(v => !v.used && v.expiryDate >= today);
                 if (activeVouchers.length > 0) {
                     const total = activeVouchers.reduce((s, v) => s + v.amount, 0);
@@ -1454,7 +1462,7 @@
                 return;
             }
 
-            const dateStr = dateInput || new Date().toISOString().split('T')[0];
+            const dateStr = dateInput || getLocalDateString(new Date());
 
             data.spendings.push({
                 id: Date.now(),
@@ -1519,7 +1527,7 @@
             if (!dateInput) { hint.style.display = 'none'; return; }
 
             const d = new Date(dateInput + 'T00:00:00+08:00');
-            const day = d.getUTCDay(); // 0=Sun, 5=Fri, 6=Sat
+            const day = d.getDay(); // 0=Sun, 5=Fri, 6=Sat
 
             if (day !== 5 && day !== 6 && day !== 0) {
                 hint.textContent = '⚠️ 抽獎只限週五、週六、週日！呢日唔係抽獎日。';
@@ -1533,7 +1541,7 @@
             // 預設今日（如果係週五六日）或最近嘅週五
             const now = new Date();
             const macauDate = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-            const day = macauDate.getUTCDay(); // 0=Sun, 5=Fri, 6=Sat
+            const day = macauDate.getDay(); // 0=Sun, 5=Fri, 6=Sat
 
             let targetDate;
             if (day === 5 || day === 6 || day === 0) {
@@ -1544,7 +1552,7 @@
                 targetDate = new Date(macauDate.getTime() - diff * 24 * 60 * 60 * 1000);
             }
 
-            const dateStr = targetDate.toISOString().split('T')[0];
+            const dateStr = getLocalDateString(targetDate);
             const drawDateInput = document.getElementById('draw-date');
 
             // 設定 min/max 為活動期間，且只允許週五六日
@@ -1608,10 +1616,7 @@
             }
 
             // 用戶選定的抽獎日期
-            const dateStr = document.getElementById('draw-date').value || (() => {
-                const now = new Date();
-                return new Date(now.getTime() + (8 * 60 * 60 * 1000)).toISOString().split('T')[0];
-            })();
+            const dateStr = document.getElementById('draw-date').value || getLocalDateString(new Date());
 
             data.draws.push({
                 id: Date.now(),
@@ -1872,7 +1877,7 @@
                 return;
             }
 
-            const dateStr = dateInput || new Date().toISOString().split('T')[0];
+            const dateStr = dateInput || getLocalDateString(new Date());
 
             data.spendings.push({
                 id: Date.now(),
@@ -1905,7 +1910,7 @@
 
             const now = new Date();
             const macauDate = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-            const dateStr = macauDate.toISOString().split('T')[0];
+            const dateStr = getLocalDateString(macauDate);
 
             if (!data.bonusDraws) data.bonusDraws = [];
             data.bonusDraws.push({
@@ -1979,7 +1984,7 @@
                 id: Date.now(),
                 cardType: cardType,
                 amount: amount,
-                date: new Date().toISOString().split('T')[0]
+                date: getLocalDateString(new Date())
             });
 
             saveData();
@@ -2009,7 +2014,7 @@
             }
 
             const now = new Date();
-            const today = now.toISOString().split('T')[0];
+            const today = getLocalDateString(now);
 
             // 取所有可用券（同日到期的同錢包優先）
             const activeVouchers = data.vouchers
@@ -2146,7 +2151,7 @@
 
         function applyAIVoucherCombo() {
             if (!window._aiBestCombo || window._aiBestCombo.length === 0) return;
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString(new Date());
             const total = window._aiBestCombo.reduce((s, v) => s + v.amount, 0);
 
             if (!confirm(`確定使用 ${window._aiBestCombo.length} 張券（共 $${total}）？\n\n請確保消費 ≥ $${total * 3}`)) return;
@@ -2182,7 +2187,7 @@
         function renderVouchers() {
             const list = document.getElementById('voucher-list');
             const now = new Date();
-            const today = now.toISOString().split('T')[0];
+            const today = getLocalDateString(now);
 
             let filtered = data.vouchers;
             if (voucherFilter === 'active') filtered = data.vouchers.filter(v => !v.used && v.expiryDate >= today);
@@ -2279,7 +2284,7 @@
 
         function batchUseVouchers(wallet) {
             const now = new Date();
-            const today = now.toISOString().split('T')[0];
+            const today = getLocalDateString(now);
 
             // Find all active vouchers for this wallet
             const vouchersToUse = data.vouchers.filter(v => v.wallet === wallet && !v.used && v.expiryDate >= today);
@@ -2315,7 +2320,7 @@
         function getTomorrow() {
             const d = new Date();
             d.setDate(d.getDate() + 1);
-            return d.toISOString().split('T')[0];
+            return getLocalDateString(d);
         }
 
         function useVoucher(id) {
@@ -2357,7 +2362,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `macau-spending-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `macau-spending-backup-${getLocalDateString(new Date())}.json`;
             a.click();
             URL.revokeObjectURL(url);
             showToast('備份已導出');
@@ -2398,7 +2403,7 @@
             initDrawDate();
 
             // Set default date for spending
-            document.getElementById('spend-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('spend-date').value = getLocalDateString(new Date());
 
             // Offline detection
             window.addEventListener('online', () => {

@@ -399,7 +399,12 @@
         function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
         // ========== DATE HELPERS ==========
-        const toISO = d => new Date(d).toISOString().split('T')[0];
+        // 用本地日期（唔好用 toISOString，嗰個係 UTC，澳門凌晨時段會倒退一日）
+        const toISO = d => {
+            const x = new Date(d);
+            const p = n => String(n).padStart(2, '0');
+            return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}`;
+        };
         const parseD = s => new Date(s + 'T00:00:00');
 
         function getWeekNumber(date) {
@@ -426,6 +431,19 @@
             }
             return d;
         }
+
+        // 一次性修正：舊版用 UTC 計到期日（少一日），用每張券的領券日重計返
+        (function healVoucherExpiry() {
+            let changed = false;
+            const today = toISO(new Date());
+            data.vouchers.forEach(v => {
+                if (!v.date) return;
+                const correct = toISO(nextThursday(v.date));
+                if (v.expiryDate !== correct) { v.expiryDate = correct; changed = true; }
+                if (!v.used && v.expired && v.expiryDate >= today) { v.expired = false; changed = true; }
+            });
+            if (changed) saveData();
+        })();
 
         // 某錢包某週的領獎機會 = 該週滿50消費筆數 × 3
         function walletQuota(wallet, weekNum) {

@@ -238,7 +238,7 @@
                     <select id="draw-wallet"></select>
                 </div>
                 <div class="form-group">
-                    <label>本週剩餘領獎機會</label>
+                    <label>本週已領獎次數（此錢包）</label>
                     <div style="font-size:1.5em;font-weight:bold;color:#764ba2;padding:10px;" id="draws-remaining">-</div>
                 </div>
                 <div class="form-group">
@@ -536,7 +536,7 @@
                 if (q.used > 0 || activeVal > 0 || active.length > 0) {
                     wHtml += `<div class="voucher"><div>
                         <div style="font-weight:bold;">${w}</div>
-                        <div class="voucher-wallet">領獎 ${q.used}/${q.total}｜可用券 ${activeVal} MOP（${active.length} 張）</div>
+                        <div class="voucher-wallet">領獎 ${q.used} 次｜可用券 ${activeVal} MOP（${active.length} 張）</div>
                     </div></div>`;
                 }
             });
@@ -614,8 +614,12 @@
 
         function updateDrawsRemaining(wallet) {
             const week = getCurrentWeek();
-            const q = walletQuota(wallet, week);
-            document.getElementById('draws-remaining').textContent = q.left > 0 ? `${q.left} 次` : '0 次（未有機會）';
+            const { start, end } = getWeekDates(week);
+            const n = data.draws.filter(dr => {
+                const d = parseD(dr.date);
+                return dr.wallet === wallet && d >= start && d <= end;
+            }).length;
+            document.getElementById('draws-remaining').textContent = `${n} 次`;
             const btn = document.getElementById('draw-btn');
             btn.disabled = false;
             btn.textContent = '🎲 領獎！';
@@ -626,8 +630,6 @@
             const today = toISO(new Date());
 
             if (!isRewardDay(today)) { showToast('⛔ 只限週五、六、日領獎'); return; }
-            const q = walletQuota(wallet, getCurrentWeek());
-            if (q.left <= 0) { showToast('未有領獎機會：先去「消費」頁記錄一筆 ≥50 MOP 消費（要用同一個錢包），每筆有 3 次機會'); return; }
 
             const result = parseInt(document.getElementById('draw-result-select').value);
             data.draws.push({ id: Date.now(), wallet, date: today, result });
@@ -683,7 +685,7 @@
             saveData();
             updateDrawsRemaining(document.getElementById('draw-wallet').value);
             renderDrawHistory();
-            showToast(`🗑️ 已刪除領獎記錄${voucherMsg}，機會已退返`);
+            showToast(`🗑️ 已刪除領獎記錄${voucherMsg}`);
         }
 
         // ========== MERCHANT VOUCHERS ==========

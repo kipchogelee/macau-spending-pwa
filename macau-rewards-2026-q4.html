@@ -432,9 +432,15 @@
             return d;
         }
 
-        // 一次性修正：舊版用 UTC 計到期日（少一日），用每張券的領券日重計返
-        (function healVoucherExpiry() {
+        // 一次性修正：舊版用 UTC 計日期（少一日）；用每筆記錄的建立時間（id）還原返本地日期
+        (function healDates() {
             let changed = false;
+            const utcDate = t => new Date(t).toISOString().split('T')[0];
+            data.spendings.forEach(s => {
+                if (!s.id || !s.date) return;
+                const local = toISO(new Date(s.id));
+                if (s.date !== local && s.date === utcDate(s.id)) { s.date = local; changed = true; }
+            });
             const today = toISO(new Date());
             data.vouchers.forEach(v => {
                 if (!v.date) return;
@@ -609,10 +615,10 @@
         function updateDrawsRemaining(wallet) {
             const week = getCurrentWeek();
             const q = walletQuota(wallet, week);
-            document.getElementById('draws-remaining').textContent = q.left > 0 ? `${q.left} 次` : '本週用完';
+            document.getElementById('draws-remaining').textContent = q.left > 0 ? `${q.left} 次` : '0 次（未有機會）';
             const btn = document.getElementById('draw-btn');
-            if (q.left <= 0) { btn.disabled = true; btn.textContent = '😢 本週機會已用完'; }
-            else { btn.disabled = false; btn.textContent = '🎲 領獎！'; }
+            btn.disabled = false;
+            btn.textContent = '🎲 領獎！';
         }
 
         function recordDraw() {
@@ -621,7 +627,7 @@
 
             if (!isRewardDay(today)) { showToast('⛔ 只限週五、六、日領獎'); return; }
             const q = walletQuota(wallet, getCurrentWeek());
-            if (q.left <= 0) { showToast('本週呢個錢包嘅領獎機會已用完！'); return; }
+            if (q.left <= 0) { showToast('未有領獎機會：先去「消費」頁記錄一筆 ≥50 MOP 消費（要用同一個錢包），每筆有 3 次機會'); return; }
 
             const result = parseInt(document.getElementById('draw-result-select').value);
             data.draws.push({ id: Date.now(), wallet, date: today, result });

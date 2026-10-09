@@ -664,9 +664,26 @@
                     <div class="record-amount">${r}</div>
                     <div class="record-detail">${d.wallet}</div>
                     <div class="record-date">${d.date}</div>
-                </div></div>`;
+                </div><button class="delete-btn" onclick="deleteDraw(${d.id})">✕</button></div>`;
             });
             el.innerHTML = html;
+        }
+
+        function deleteDraw(id) {
+            const d = data.draws.find(x => x.id === id);
+            if (!d) return;
+            data.draws = data.draws.filter(x => x.id !== id);
+            // 一併刪除呢次領獎產生嘅電子券（未用先刪；已核銷就保留返）
+            let voucherMsg = '';
+            if (d.result > 0) {
+                const v = data.vouchers.find(x => x.id === id + 1 && x.type === 'e');
+                if (v && !v.used) { data.vouchers = data.vouchers.filter(x => x.id !== v.id); voucherMsg = '，連同嗰張券一併刪除'; }
+                else if (v && v.used) { voucherMsg = '（嗰張券已核銷，冇刪到）'; }
+            }
+            saveData();
+            updateDrawsRemaining(document.getElementById('draw-wallet').value);
+            renderDrawHistory();
+            showToast(`🗑️ 已刪除領獎記錄${voucherMsg}，機會已退返`);
         }
 
         // ========== MERCHANT VOUCHERS ==========
@@ -749,13 +766,14 @@
                 }
 
                 const badge = v.type === 'e' ? '<span class="badge e">電子</span>' : v.type === 'm' ? '<span class="badge m">滿減</span>' : '<span class="badge g">禮遇</span>';
+                const delBtn = `<button style="background:#ffe6e6;color:#ff6b6b;" onclick="deleteVoucher(${v.id})">刪除</button>`;
                 html += `<div class="voucher ${cls}">
                     <div class="voucher-amount ${amtCls}">${amtLabel}</div>
                     <div class="voucher-info">
                         <div class="voucher-wallet">${badge}${v.wallet}｜${status}</div>
                         <div class="voucher-date">到期：${v.expiryDate}</div>
                     </div>
-                    <div class="voucher-actions">${useBtn}</div>
+                    <div class="voucher-actions">${useBtn}${delBtn}</div>
                 </div>`;
             });
             list.innerHTML = html;
@@ -764,6 +782,14 @@
         function useVoucher(id) {
             const v = data.vouchers.find(x => x.id === id);
             if (v) { v.used = true; saveData(); renderVouchers(); showToast(`✅ 已核銷 ${v.type === 'g' ? '禮遇券' : v.amount + ' MOP 優惠券'}`); }
+        }
+
+        function deleteVoucher(id) {
+            const v = data.vouchers.find(x => x.id === id);
+            if (!v) return;
+            data.vouchers = data.vouchers.filter(x => x.id !== id);
+            saveData(); renderVouchers();
+            showToast(`🗑️ 已刪除 ${v.type === 'g' ? '禮遇券' : v.type === 'm' ? '商戶滿減券' : v.amount + ' MOP 電子券'}`);
         }
 
         // ========== UTILS ==========
